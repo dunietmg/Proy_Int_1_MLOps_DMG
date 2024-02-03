@@ -183,3 +183,31 @@ def best_developer_year(year: int):
     return result
 
 
+# ------- FUNCION developer_reviews_analysis ----------
+
+# Definir la ruta de FastAPI para la función developer_reviews_analysis
+@app.get("/developer-reviews-analysis/{desarrollador}")
+def developer_reviews_analysis_endpoint(desarrollador: str):
+
+    # Lee el archivo parquet de la carpeta data
+    current_directory = os.path.dirname(os.path.abspath(__file__))
+    path_to_parquet = os.path.join(current_directory, 'data', 'df_developer_anio.parquet')
+    df_developer_anio = pq.read_table(path_to_parquet).to_pandas()
+    
+
+    # Filtra el DataFrame para el desarrollador dado
+    df_filtered = df_developer_anio[df_developer_anio['developer'] == desarrollador]
+
+    
+    if df_filtered.empty:
+        raise HTTPException(status_code=404, detail=f"No se encontraron registros para el desarrollador {desarrollador}")
+
+    # Agrupar por análisis de sentimiento y contar la cantidad de registros
+    analysis_counts = df_filtered.groupby('sentiment_analysis').size().to_dict()
+
+    # Construir el resultado como un diccionario con una lista
+    result = {desarrollador: [f'Negative = {analysis_counts.get(0, 0)}', f'Positive = {analysis_counts.get(2, 0)}']}
+
+    return result
+
+
