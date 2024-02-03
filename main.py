@@ -68,3 +68,48 @@ def developer(desarrollador: str):
 
     return resultado_json
 
+# ------- FUNCION userdata ----------
+
+@app.get("/userdata/{user_id}")
+def userdata(user_id: str):
+
+    # Lee los archivos parquet de la carpeta data
+    current_directory = os.path.dirname(os.path.abspath(__file__))
+    path_to_parquet = os.path.join(current_directory, 'data', 'df_gastos_items.parquet')
+    df_gastos_items = pq.read_table(path_to_parquet).to_pandas()
+    
+    current_directory = os.path.dirname(os.path.abspath(__file__))
+    path_to_parquet = os.path.join(current_directory, 'data', 'df_reviews_etl.parquet')
+    df_reviews_etl = pq.read_table(path_to_parquet).to_pandas()
+    
+
+    # Filtra por el usuario de interés
+    usuario = df_reviews_etl[df_reviews_etl['user_id'] == user_id]
+    
+    if usuario.empty:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Convertir user_id a tipo string para asegurarse de que coincida con el tipo de datos en los DataFrames
+    user_id = str(user_id)
+
+    # Calcula la cantidad de dinero gastado para el usuario de interés
+    cantidad_dinero = df_gastos_items[df_gastos_items['user_id'] == user_id]['price'].iloc[0]
+    
+    # Busca el count_item para el usuario de interés
+    count_items = df_gastos_items[df_gastos_items['user_id'] == user_id]['items_count'].iloc[0]
+
+    # Calcula el total de recomendaciones realizadas por el usuario de interés
+    total_recomendaciones = usuario['recommend'].sum()
+    
+    # Calcula el total de reviews realizada por todos los usuarios
+    total_reviews = len(df_reviews_etl['user_id'].unique())
+    
+    # Calcula el porcentaje de recomendaciones realizadas por el usuario de interés
+    porcentaje_recomendaciones = (total_recomendaciones / total_reviews) * 100
+
+    return {
+        'cantidad_dinero': int(cantidad_dinero),
+        'porcentaje_recomendacion': round(float(porcentaje_recomendaciones), 2),
+        'total_items': int(count_items)
+    }
+
