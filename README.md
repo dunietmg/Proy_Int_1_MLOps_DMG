@@ -19,7 +19,7 @@ app = FastAPI()
 # App de prueba (ejemplo)
 @app.get("/")
 def read_root():
-return {"Hola": "Mundo!"}
+    return {"Hola": "Mundo!"}
 
 # ejecutar uvicorn main:app --reload para cargar en el servidor
 
