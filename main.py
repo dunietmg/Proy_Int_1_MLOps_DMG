@@ -113,3 +113,73 @@ def userdata(user_id: str):
         'total_items': int(count_items)
     }
 
+# ------- FUNCION user_for_genre ----------
+
+@app.get("/user_for_genre/{genre}", response_model=dict)
+def user_for_genre(genre: str):
+
+    # Lee el archivo parquet de la carpeta data
+    current_directory = os.path.dirname(os.path.abspath(__file__))
+    path_to_parquet = os.path.join(current_directory, 'data', 'df_games_genres.parquet')
+    df_games_genres = pq.read_table(path_to_parquet).to_pandas()
+    
+    current_directory = os.path.dirname(os.path.abspath(__file__))
+    path_to_parquet = os.path.join(current_directory, 'data', 'df_users_horas.parquet')
+    df_users_horas = pq.read_table(path_to_parquet).to_pandas()
+
+    # Une ambos dataframes
+    df_genres_horas = df_games_genres.merge(df_users_horas, on='item_id', how='right')
+
+    # Filtra el DataFrame resultante para obtener solo las filas relacionadas con el género dado
+    df_filtered = df_genres_horas[df_genres_horas['genres'] == genre]
+
+    if df_filtered.empty:
+        return {"message": "No data found for the given genre"}
+
+    # Encontrar el usuario que acumula más horas jugadas para el género dado
+    max_user = df_filtered.groupby('user_id')['playtime_forever'].sum().idxmax()
+
+    # Filtrar el DataFrame para obtener solo las filas relacionadas con el usuario que acumula más horas
+    df_user_max_hours = df_filtered[df_filtered['user_id'] == max_user]
+
+    # Agrupar por año y sumar las horas jugadas
+    horas_por_anio = df_user_max_hours.groupby('anio')['playtime_forever'].sum()
+
+    # Construir el diccionario de resultados
+    result_dict = {
+        "Usuario con más horas jugadas para Género X": max_user,
+        "Horas jugadas": [{"Año": int(year), "Horas": int(hours)} for year, hours in horas_por_anio.reset_index().to_dict(orient='split')['data']]
+    }
+
+    return result_dict
+
+# ------- FUNCION best_developer_year ----------
+
+
+# Definir la ruta de FastAPI para la función best_developer_year
+@app.get("/best_developer/{year}", response_model=List[dict])
+
+def best_developer_year(year: int):
+
+    # Lee el archivo parquet de la carpeta data
+    current_directory = os.path.dirname(os.path.abspath(__file__))
+    path_to_parquet = os.path.join(current_directory, 'data', 'df_best_developer_anio.parquet')
+    df_best_developer_anio = pq.read_table(path_to_parquet).to_pandas()
+
+    # Filtra el DataFrame para el año dado y donde recommend es True y sentiment_analysis es positivo
+    df_filtered = df_best_developer_anio[(df_best_developer_anio['anio'] == year) &
+                                         (df_best_developer_anio['recommend'] == True) &
+                                         (df_best_developer_anio['sentiment_analysis'] > 1)]
+
+    if df_filtered.empty:
+        return None
+
+    # Agrupar por desarrollador y contar la cantidad de juegos recomendados
+    top_developers = df_filtered.groupby('developer')['recommend'].sum().nlargest(3)
+
+    # Construir el resultado como una lista de diccionarios
+    result = [{"Top {}".format(i + 1): developer} for i, (developer, _) in enumerate(top_developers.items())]
+
+    return result
+
+
