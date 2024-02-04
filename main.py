@@ -23,7 +23,11 @@ app = FastAPI()
 # ------- FUNCION de bienvenida ----------
 @app.get("/")
 def read_root():
-    return "Bienvenido al Proyecto Integrador Nro.1 de la Etapa de Labs en Henry. Autor: Duniet Marrero García"
+    welcome_message = "Bienvenido al Proyecto Integrador Nro.1 de la Etapa de Labs en Henry. Autor: Duniet Marrero García. "
+    additional_message = "Para continuar y explorar las funciones de la API, agregue /docs al final de la URL."
+    return welcome_message + additional_message
+
+
 
 # ------- FUNCION developer ----------
 
