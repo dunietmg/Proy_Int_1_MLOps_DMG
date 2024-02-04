@@ -1,261 +1,175 @@
-from typing import Union, List
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import JSONResponse
-from pydantic import BaseModel
-import pandas as pd
-from dateutil import parser
-import pyarrow.parquet as pq
-import os
-import string
-import re
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import linear_kernel
+<p align=center><img src="https://d31uz8lwfmyn8g.cloudfront.net/Assets/logo-henry-white-lg.png" height=100><p>
 
+# <h1 align=center> **PROYECTO INDIVIDUAL Nº1** </h1>
 
-# Creacion de una aplicacion FastApi
+# <h1 align=center> ***Autor: Duniet Marrero García*** </h1>
 
-app = FastAPI()
+# <h1 align=center>**Tema: Machine Learning Operations (MLOps)**</h1>
 
-# App de prueba (ejemplo)
-@app.get("/")
-def read_root():
-    return {"Hola": "Mundo!"}
+<p align="center">
+<img src="https://www.crestdatasys.com/wp-content/uploads/elementor/thumbs/chart-02-qccghw7hjmq4y8t66r0vddbb2l07qr6d5k9kgn0c90.jpg"  height=200>
+</p>
 
-# ejecutar uvicorn main:app --reload para cargar en el servidor
+<p align=center> ¡Este readme corresponde al Proyecto Individual Nro. 1 de la Etapa de labs! para la Cohorte DATA-PT-06.
 
+<hr>  
 
-# ------- FUNCION developer ----------
+## **Descripción y Contexto**
 
-@app.get("/developer/{desarrollador}")
-def developer(desarrollador: str):
+Simulando un entorno de trabajo real el proyecto se situa en el estudiante desarrollando un roll de **`Data Scientist`** como trabajandor de la  plataforma de distribución digital de videojuegos "Steam".
 
-# Lee los archivos parquet de la carpeta data
-# Obtén la ruta del directorio actual del script
-current_directory = os.path.dirname(os.path.abspath(__file__))
-path_to_parquet = os.path.join(current_directory, 'data', 'df_games_etl.parquet')
-df_games_etl = pq.read_table(path_to_parquet).to_pandas()
+Steam es un servicio de distribución digital de videojuegos. Fue desarrollado por Valve Corporation y lanzado en septiembre de 2003. Steam está disponible en Microsoft Windows, macOS y otras plataformas.
 
-# Filtrar el DataFrame por la empresa desarrolladora
-df_desarrollador = df_games_etl[df_games_etl['developer'] == desarrollador].copy()
+La emprese solicita crear un modelo de Machine Learning para desarrollar un sistema de recomendación de videojuegos para usuarios.
 
-def obtener_anio(fecha):
-try:
-# Intentar convertir la fecha al formato de fecha
-fecha_obj = parser.parse(fecha)
-return fecha_obj.year
-except:
-# Si no se puede convertir, retornar un valor nulo o manejarlo según sea necesario
-return None
+Para realizar el trabajo se propone el siguiente esquema general:
 
-# Crear la columna "anio" extrayendo el año de la columna "release_date"
-df_desarrollador['anio'] = df_desarrollador['release_date'].apply(obtener_anio).astype('Int64')
+<p align=center>  <img src="https://scontent.fpss6-1.fna.fbcdn.net/v/t39.30808-6/423247335_7047633531985403_5787616016465433474_n.jpg?_nc_cat=101&ccb=1-7&_nc_sid=3635dc&_nc_eui2=AeGLnT22YXpeTV5qO3cCEyqIfZ0Dx2xS9r99nQPHbFL2vxDMXoyXdGDEi_j9xOvp9gqhsilUVo9lVGMnHuJrXCwJ&_nc_ohc=SAxKJ0Qx8pUAX8YLmBm&_nc_ht=scontent.fpss6-1.fna&oh=00_AfCaCwW2ZImS42Wq9SRbc3sKJiBynITHkISfah1Uwtul2w&oe=65BC79BF"  height=400>
+</p>
 
-# Contar la cantidad de items por año
-cantidad_items_por_año = df_desarrollador.groupby('anio').size().reset_index(name='cantidad_items')
+## **Datasets**
 
-# Contar la cantidad de items gratuitos por año
-cantidad_items_gratuitos_por_año = (df_desarrollador[df_desarrollador['es_gratis']].groupby('anio').size().reset_index(name='cantidad_items_gratuitos')).astype('Int64')
+Los tres archivos para iniciar el trabajo se entregaron en formato JSON:
 
-# Fusionar los DataFrames para obtener la cantidad total y gratuita por año
-resultado = pd.merge(cantidad_items_por_año, cantidad_items_gratuitos_por_año, on='anio', how='left').fillna(0)
+- ***australian_user_reviews.json:*** contiene fundamentalmente los comentarios que los usuarios realizaron sobre los juegos que consumen, recomiendaciones, si el juego es gracioso o no, el id del usuario, la url del perfil y el id del juego.
 
-# Calcular el porcentaje de contenido gratuito por año
-resultado['porcentaje_gratuito'] = ((resultado['cantidad_items_gratuitos'] / resultado['cantidad_items']) * 100).round(2)
+- ***australian_users_items.json:*** contiene información sobre los juegos que juegan todos los usuarios, así como el tiempo acumulado de horas de juego de cada usuario por los diferentes juegos.
 
-# Convertir el resultado a formato JSON para que pueda ser retornado por FastAPI
-resultado_json = resultado.to_dict(orient='records')
+- ***output_steam_games.json:*** contiene los datos relacionados a los juegos en sí, como títulos, generos, desarrolladores, precios, fechas de lanzamientos, especificaciones, etc.
 
-return resultado_json
+Los Datasets originales (sin procesar) se pueden consultar siguiendo este [Link](https://drive.google.com/drive/folders/1Ua1G9T11NrBhfl1oZmb8ITni_CrdVfAx?usp=sharing).
 
+## **Análisis Exploratorio de los Datos (EDA)**
 
-# ------- FUNCION userdata ----------
+Los datasets de trabajo se entregaron por parte de la empresa en formato .JSON con columnas de datos anidados, razón por la cual se procesaron utilizando la función "normalize"  para aplanar las columnas y obtener los datos en el formato adecuado.
 
-@app.get("/userdata/{user_id}")
-def userdata(user_id: str):
+El EDA realizado se puede consultar en el siguiente [notebook](https://colab.research.google.com/drive/1AkbvbQItQOOqCrIzBDwhyAuG0QGKeGoD?usp=sharing) de Google Colaboratory.
 
-# Lee los archivos parquet de la carpeta data
-current_directory = os.path.dirname(os.path.abspath(__file__))
-path_to_parquet = os.path.join(current_directory, 'data', 'df_gastos_items.parquet')
-df_gastos_items = pq.read_table(path_to_parquet).to_pandas()
 
-current_directory = os.path.dirname(os.path.abspath(__file__))
-path_to_parquet = os.path.join(current_directory, 'data', 'df_reviews_etl.parquet')
-df_reviews_etl = pq.read_table(path_to_parquet).to_pandas()
+## **Extracción, Transformación y Carga de los datos (ETL)**
 
+Se realizaron las transformaciones de los datos para leer el dataset con en el formato y tipo de datos correctos. Se eliminaron o imputaron datos nulos, se eliminaron duplicados y columnas que no se necesitan para responder las consultas o preparar los modelos de aprendizaje automático, de esta forma se pudo optimizar el rendimiento de la API. Finalmente estos archivos se exportaron y guardaron en formato CSV.
 
-# Filtra por el usuario de interés
-usuario = df_reviews_etl[df_reviews_etl['user_id'] == user_id]
+El proceso de ETL se puede consultar en el siguiente [notebook](https://colab.research.google.com/drive/13FenTas8UPPPfukNK6Brq1c0tTXR-Qe5?usp=sharing) de Google Colaboratory.
 
-if usuario.empty:
-raise HTTPException(status_code=404, detail="User not found")
+Los archivos resultantes luego del proceso de ETL se pueden consultar siguiendo este [Link](https://drive.google.com/drive/folders/1eMpd99oz-da24p0OoCHxzlKc41YwQOtD?usp=sharing)
 
-# Convertir user_id a tipo string para asegurarse de que coincida con el tipo de datos en los DataFrames
-user_id = str(user_id)
+## **Feature Engineering**
 
-# Calcula la cantidad de dinero gastado para el usuario de interés
-cantidad_dinero = df_gastos_items[df_gastos_items['user_id'] == user_id]['price'].iloc[0]
+Se aplicó un "análisis de sentimiento" a las reseñas (reviews) de los usuarios clasificandolos segun la siguiente escala:
 
-# Busca el count_item para el usuario de interés
-count_items = df_gastos_items[df_gastos_items['user_id'] == user_id]['items_count'].iloc[0]
+- Valor 0: negativo
+- Valor 1: neutral o sin review
+- Valor 2: positivo.
 
-# Calcula el total de recomendaciones realizadas por el usuario de interés
-total_recomendaciones = usuario['recommend'].sum()
+El análisis se realizó utilizando la librería TextBlob de procesamiento de lenguaje natural (NLP) en Phyton, la cual calcula calcular la polaridad de sentimiento y los datos resultantes se almacenaron en una nueva columna llamada 'sentiment_analysis' que reemplazó a la columna 'reviews'.
 
-# Calcula el total de reviews realizada por todos los usuarios
-total_reviews = len(df_reviews_etl['user_id'].unique())
+El Procesamiento de Lenguaje Natural (NLP) realizado se puede consultar en el siguiente [notebook](https://colab.research.google.com/drive/1eZeyxxc4Mwd8Kt1gzI3GX5omMHAfmg8w?usp=sharing) de Google Colaboratory.
 
-# Calcula el porcentaje de recomendaciones realizadas por el usuario de interés
-porcentaje_recomendaciones = (total_recomendaciones / total_reviews) * 100
 
-return {
-'cantidad_dinero': int(cantidad_dinero),
-'porcentaje_recomendacion': round(float(porcentaje_recomendaciones), 2),
-'total_items': int(count_items)
-}
 
+**`Desarrollo API`**:   Propones disponibilizar los datos de la empresa usando el framework ***FastAPI***. Las consultas que propones son las siguientes:
 
+<sub> Debes crear las siguientes funciones para los endpoints que se consumirán en la API, recuerden que deben tener un decorador por cada una (@app.get(‘/’)).<sub/>
 
-# ------- FUNCION user_for_genre ----------
 
-@app.get("/user_for_genre/{genre}", response_model=dict)
-def user_for_genre(genre: str):
++ def **developer( *`desarrollador` : str* )**:
+    `Cantidad` de items y `porcentaje` de contenido Free por año según empresa desarrolladora. 
+Ejemplo de retorno:
 
-# Lee el archivo parquet de la carpeta data
-current_directory = os.path.dirname(os.path.abspath(__file__))
-path_to_parquet = os.path.join(current_directory, 'data', 'df_games_genres.parquet')
-df_games_genres = pq.read_table(path_to_parquet).to_pandas()
+| Año  | Cantidad de Items | Contenido Free  |
+|------|-------------------|------------------|
+| 2023 | 50                | 27%              |
+| 2022 | 45                | 25%              |
+| xxxx | xx                | xx%              |
 
-current_directory = os.path.dirname(os.path.abspath(__file__))
-path_to_parquet = os.path.join(current_directory, 'data', 'df_users_horas.parquet')
-df_users_horas = pq.read_table(path_to_parquet).to_pandas()
 
-# Une ambos dataframes
-df_genres_horas = df_games_genres.merge(df_users_horas, on='item_id', how='right')
++ def **userdata( *`User_id` : str* )**:
+    Debe devolver `cantidad` de dinero gastado por el usuario, el `porcentaje` de recomendación en base a reviews.recommend y `cantidad de items`.
 
-# Filtra el DataFrame resultante para obtener solo las filas relacionadas con el género dado
-df_filtered = df_genres_horas[df_genres_horas['genres'] == genre]
+Ejemplo de retorno: {"Usuario X" : us213ndjss09sdf, "Dinero gastado": 200 USD, "% de recomendación": 20%, "cantidad de items": 5}
 
-if df_filtered.empty:
-return {"message": "No data found for the given genre"}
++ def **UserForGenre( *`genero` : str* )**:
+    Debe devolver el usuario que acumula más horas jugadas para el género dado y una lista de la acumulación de horas jugadas por año de lanzamiento.
 
-# Encontrar el usuario que acumula más horas jugadas para el género dado
-max_user = df_filtered.groupby('user_id')['playtime_forever'].sum().idxmax()
+Ejemplo de retorno: {"Usuario con más horas jugadas para Género X" : us213ndjss09sdf,
+			     "Horas jugadas":[{Año: 2013, Horas: 203}, {Año: 2012, Horas: 100}, {Año: 2011, Horas: 23}]}
+	
++ def **best_developer_year( *`año` : int* )**:
+   Devuelve el top 3 de desarrolladores con juegos MÁS recomendados por usuarios para el año dado. (reviews.recommend = True y comentarios positivos)
+  
+Ejemplo de retorno: [{"Puesto 1" : X}, {"Puesto 2" : Y},{"Puesto 3" : Z}]
 
-# Filtrar el DataFrame para obtener solo las filas relacionadas con el usuario que acumula más horas
-df_user_max_hours = df_filtered[df_filtered['user_id'] == max_user]
++ def **developer_reviews_analysis( *`desarrolladora` : str* )**:
+    Según el desarrollador, se devuelve un diccionario con el nombre del desarrollador como llave y una lista con la cantidad total 
+    de registros de reseñas de usuarios que se encuentren categorizados con un análisis de sentimiento como valor positivo o negativo. 
 
-# Agrupar por año y sumar las horas jugadas
-horas_por_anio = df_user_max_hours.groupby('anio')['playtime_forever'].sum()
+Ejemplo de retorno: {'Valve' : [Negative = 182, Positive = 278]}
 
-# Construir el diccionario de resultados
-result_dict = {
-"Usuario con más horas jugadas para Género X": max_user,
-"Horas jugadas": [{"Año": int(year), "Horas": int(hours)} for year, hours in horas_por_anio.reset_index().to_dict(orient='split')['data']]
-}
+<br/>
 
-return result_dict
+> `Importante`<br>
+El MVP _tiene_ que ser una API que pueda ser consumida segun los criterios de [API REST o RESTful](https://rockcontent.com/es/blog/api-rest/) desde cualquier dispositivo conectado a internet. Algunas herramientas como por ejemplo, Streamlit, si bien pueden brindar una interfaz de consulta, no cumplen con las condiciones para ser consideradas una API, sin workarounds.
 
 
+**`Deployment`**: Conoces sobre [Render](https://render.com/docs/free#free-web-services) y tienes un [tutorial de Render](https://github.com/HX-FNegrete/render-fastapi-tutorial) que te hace la vida mas fácil :smile: . También podrías usar [Railway](https://railway.app/), o cualquier otro servicio que permita que la API pueda ser consumida desde la web.
 
-# ------- FUNCION best_developer_year ----------
+<br/>
 
+**`Análisis exploratorio de los datos`**: _(Exploratory Data Analysis-EDA)_
 
-# Definir la ruta de FastAPI para la función best_developer_year
-@app.get("/best_developer/{year}", response_model=List[dict])
+Ya los datos están limpios, ahora es tiempo de investigar las relaciones que hay entre las variables del dataset, ver si hay outliers o anomalías (que no tienen que ser errores necesariamente :eyes: ), y ver si hay algún patrón interesante que valga la pena explorar en un análisis posterior. Las nubes de palabras dan una buena idea de cuáles palabras son más frecuentes en los títulos, ¡podría ayudar al sistema de predicción! En esta ocasión vamos a pedirte que no uses librerías para hacer EDA automático ya que queremos que pongas en práctica los conceptos y tareas involucrados en el mismo. Puedes leer un poco más sobre EDA en [este articulo](https://medium.com/swlh/introduction-to-exploratory-data-analysis-eda-d83424e47151)
 
-def best_developer_year(year: int):
+**`Modelo de aprendizaje automático`**: 
 
-# Lee el archivo parquet de la carpeta data
-current_directory = os.path.dirname(os.path.abspath(__file__))
-path_to_parquet = os.path.join(current_directory, 'data', 'df_best_developer_anio.parquet')
-df_best_developer_anio = pq.read_table(path_to_parquet).to_pandas()
+Una vez que toda la data es consumible por la API, está lista para consumir por los departamentos de Analytics y Machine Learning, y nuestro EDA nos permite entender bien los datos a los que tenemos acceso, es hora de entrenar nuestro modelo de machine learning para armar un **sistema de recomendación**. Para ello, te ofrecen dos propuestas de trabajo: En la primera, el modelo deberá tener una relación ítem-ítem, esto es se toma un item, en base a que tan similar esa ese ítem al resto, se recomiendan similares. Aquí el input es un juego y el output es una lista de juegos recomendados, para ello recomendamos aplicar la *similitud del coseno*. 
+La otra propuesta para el sistema de recomendación debe aplicar el filtro user-item, esto es tomar un usuario, se encuentran usuarios similares y se recomiendan ítems que a esos usuarios similares les gustaron. En este caso el input es un usuario y el output es una lista de juegos que se le recomienda a ese usuario, en general se explican como “A usuarios que son similares a tí también les gustó…”. 
+Deben crear al menos **uno** de los dos sistemas de recomendación (Si se atreven a tomar el desafío, para mostrar su capacidad al equipo, ¡pueden hacer ambos!). Tu líder pide que el modelo derive obligatoriamente en un GET/POST en la API símil al siguiente formato:
 
-# Filtra el DataFrame para el año dado y donde recommend es True y sentiment_analysis es positivo
-df_filtered = df_best_developer_anio[(df_best_developer_anio['anio'] == year) &
-                        (df_best_developer_anio['recommend'] == True) &
-                        (df_best_developer_anio['sentiment_analysis'] > 1)]
+Si es un sistema de recomendación item-item:
++ def **recomendacion_juego( *`id de producto`* )**:
+    Ingresando el id de producto, deberíamos recibir una lista con 5 juegos recomendados similares al ingresado.
 
-if df_filtered.empty:
-return None
+Si es un sistema de recomendación user-item:
++ def **recomendacion_usuario( *`id de usuario`* )**:
+    Ingresando el id de un usuario, deberíamos recibir una lista con 5 juegos recomendados para dicho usuario.
 
-# Agrupar por desarrollador y contar la cantidad de juegos recomendados
-top_developers = df_filtered.groupby('developer')['recommend'].sum().nlargest(3)
 
-# Construir el resultado como una lista de diccionarios
-result = [{"Top {}".format(i + 1): developer} for i, (developer, _) in enumerate(top_developers.items())]
+**`Video`**: Necesitas que al equipo le quede claro que tus herramientas funcionan realmente! Haces un video mostrando el resultado de las consultas propuestas y de tu modelo de ML entrenado! Recuerda presentarte, contar muy brevemente de que trata el proyecto y lo que vas a estar mostrando en el video.
+Para grabarlo, puedes usar la herramienta Zoom, haciendo una videollamada y grabando la pantalla, aunque seguramente buscando, encuentres muchas formas más. 😉
 
-return result
+<sub> **Spoiler**: El video NO DEBE durar mas de ***7 minutos*** y DEBE mostrar las consultas requeridas en funcionamiento desde la API y una breve explicación del modelo utilizado para el sistema de recomendación. En caso de que te sobre tiempo luego de grabarlo, puedes mostrar/explicar tu EDA, ETL e incluso cómo desarrollaste la API. <sub/>
 
+<br/>
 
-# ------- FUNCION developer_reviews_analysis ----------
+## **Criterios de evaluación**
 
-# Definir la ruta de FastAPI para la función developer_reviews_analysis
-@app.get("/developer-reviews-analysis/{desarrollador}")
-def developer_reviews_analysis_endpoint(desarrollador: str):
+**`Código`**: Prolijidad de código, uso de clases y/o funciones, en caso de ser necesario, código comentado. Se tendrá en cuenta el trato de los valores str como `COUNter-strike` / `COUNTER-STRIKE` / `counter-strike`.
 
-# Lee el archivo parquet de la carpeta data
-current_directory = os.path.dirname(os.path.abspath(__file__))
-path_to_parquet = os.path.join(current_directory, 'data', 'df_developer_anio.parquet')
-df_developer_anio = pq.read_table(path_to_parquet).to_pandas()
+**`Repositorio`**: Nombres de archivo adecuados, uso de carpetas para ordenar los archivos, README.md presentando el proyecto y el trabajo realizado. Recuerda que este último corresponde a la guía de tu proyecto, no importa que tan corto/largo sea siempre y cuando tu 'yo' + 1.5 AÑOS pueda entenderlo con facilidad. 
 
+**`Cumplimiento`** de los requerimientos de aprobación indicados en el apartado `Propuesta de trabajo`
 
-# Filtra el DataFrame para el desarrollador dado
-df_filtered = df_developer_anio[df_developer_anio['developer'] == desarrollador]
+NOTA: Recuerde entregar el link de acceso al video. Puede alojarse en YouTube, Drive o cualquier plataforma de almacenamiento. **Verificar que sea de acceso público, recomendamos usar modo incógnito en tu navegador para confirmarlo**.
 
+<br/>
+Aquí te sintetizamos que es lo que consideramos un MVP aprobatorio, y la diferencia con un producto completo.
 
-if df_filtered.empty:
-raise HTTPException(status_code=404, detail=f"No se encontraron registros para el desarrollador {desarrollador}")
 
-# Agrupar por análisis de sentimiento y contar la cantidad de registros
-analysis_counts = df_filtered.groupby('sentiment_analysis').size().to_dict()
 
-# Construir el resultado como un diccionario con una lista
-result = {desarrollador: [f'Negative = {analysis_counts.get(0, 0)}', f'Positive = {analysis_counts.get(2, 0)}']}
+<p align="center">
+<img src="https://github.com/HX-PRomero/PI_ML_OPS/raw/main/src/MVP_MLops.PNG"  height=250>
+</p>
 
-return result
 
+## **Fuente de datos**
 
-# ------- ML RECOMENDACION - Títulos similares ----------
++ [Dataset](https://drive.google.com/drive/folders/1HqBG2-sUkz_R3h1dZU5F2uAzpRn7BSpj): Carpeta con el archivo que requieren ser procesados, tengan en cuenta que hay datos que estan anidados (un diccionario o una lista como valores en la fila).
++ [Diccionario de datos](https://docs.google.com/spreadsheets/d/1-t9HLzLHIGXvliq56UE_gMaWBVTPfrlTf2D9uAtLGrk/edit?usp=drive_link): Diccionario con algunas descripciones de las columnas disponibles en el dataset.
+<br/>
 
+## **Material de apoyo**
 
+En este mismo repositorio podrás encontrar algunos (hay repositorios con distintos sistemas de recomendación) [links de ayuda](https://github.com/HX-PRomero/PI_ML_OPS/raw/main/Material%20de%20apoyo.md). Recuerda que no son los unicos recursos que puedes utilizar!
 
-@app.get("/recommendations/{title}")
-def get_recommendations(title: str):
-
-# Lee el archivo parquet de la carpeta data
-current_directory = os.path.dirname(os.path.abspath(__file__))
-path_to_parquet = os.path.join(current_directory, 'data', 'df_recomendacion_juego.parquet')
-df_recomendacion_juego = pq.read_table(path_to_parquet).to_pandas()
-
-
-df = df_recomendacion_juego
-
-# Configuración de TF-IDF
-tfidf = TfidfVectorizer(stop_words='english')
-df['ntags'] = df['ntags'].fillna('')
-tfidf_matrix = tfidf.fit_transform(df['ntags'])
-cosine_sim = linear_kernel(tfidf_matrix, tfidf_matrix)
-
-indices = pd.Series(df.index, index=df['app_name']).drop_duplicates()
-
-try:
-# Obtener el índice del juego en la matriz de similitud coseno
-idx = indices[title]
-
-# Obtener las puntuaciones de similitud para el juego
-sim_scores = list(enumerate(cosine_sim[idx]))
-
-# Ordenar las puntuaciones de similitud por orden descendente
-sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)
-
-# Obtener los índices de los 5 juegos más similares
-game_indices = [i[0] for i in sim_scores[1:6]]
-
-# Obtener los títulos de los 5 juegos más similares
-recommendations = df['app_name'].iloc[game_indices]
-
-return JSONResponse(content={'title': title, 'recommendations': recommendations.tolist()})
-
-except KeyError:
-raise HTTPException(status_code=404, detail=f'El juego {title} no se encuentra en el DataFrame.')
 
