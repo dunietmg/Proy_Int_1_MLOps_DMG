@@ -296,7 +296,7 @@ def get_recomendacion_usuario(user_id: str):
                 if df_mod_rec_2['recommend'][i] and df_mod_rec_2['sentiment_analysis'][i] in [0, 1, 2]:
                     app_name = df_mod_rec_2['app_name'][i]
                     if app_name not in seen_games:
-                        recommendations.append({"app_name": app_name, "similarity": score})
+                        recommendations.append({"app_name": app_name})
                         seen_games.add(app_name)
 
             # Selecciona las primeras 5 recomendaciones
