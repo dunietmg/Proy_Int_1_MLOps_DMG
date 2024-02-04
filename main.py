@@ -11,6 +11,8 @@ import string
 import re
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import linear_kernel
+from fastapi.encoders import jsonable_encoder
+
 
 
 # Creacion de una aplicacion FastApi
@@ -259,3 +261,54 @@ def get_recommendations(title: str):
         raise HTTPException(status_code=404, detail=f'El juego {title} no se encuentra en el DataFrame.')
     
 
+# ------- ML RECOMENDACION - Juegos recomendados para el usuario ----------
+
+@app.get("/recomendacion_usuario/{user_id}")
+def get_recomendacion_usuario(user_id: str):
+    
+    # Lee el archivo parquet de la carpeta data
+    current_directory = os.path.dirname(os.path.abspath(__file__))
+    path_to_parquet = os.path.join(current_directory, 'data', 'df_rec_reviews_muestra.parquet')
+    df_rec_reviews_muestra = pq.read_table(path_to_parquet).to_pandas()
+
+    try:
+
+        # Crear una instancia de TfidfVectorizer con stop words en inglés
+        tfidf = TfidfVectorizer(stop_words='english')
+
+        # Rellenar los valores nulos en la columna 'app_name' con una cadena vacía
+        df_rec_reviews_muestra['app_name'] = df_rec_reviews_muestra['app_name'].fillna('')
+
+        # Aplicar la transformación TF-IDF a los datos de la columna 'app_name'
+        tfidf_matrix = tfidf.fit_transform(df_rec_reviews_muestra['app_name'])
+
+        # Calcular la similitud coseno entre los juegos utilizando linear_kernel
+        cosine_sim = linear_kernel(tfidf_matrix, tfidf_matrix)
+
+        # Obtener el índice del usuario específico en el DataFrame
+        matching_users = df_rec_reviews_muestra[df_rec_reviews_muestra['user_id'] == user_id]
+
+        if not matching_users.empty:
+            user_index = matching_users.index[0]
+
+            # Obtener las recomendaciones basadas en similitud coseno y los filtros requeridos
+            recommendations = []
+            seen_games = set()  # Utilizar un conjunto para evitar duplicados
+            for i, score in sorted(enumerate(cosine_sim[user_index]), key=lambda x: x[1], reverse=True):
+                if df_rec_reviews_muestra['recommend'][i] and df_rec_reviews_muestra['sentiment_analysis'][i] in [0, 1, 2]:
+                    app_name = df_rec_reviews_muestra['app_name'][i]
+                    if app_name not in seen_games:
+                        recommendations.append({"app_name": app_name, "similarity": score})
+                        seen_games.add(app_name)
+
+            # Seleccionar las primeras 5 recomendaciones
+            top_recommendations = recommendations[:5]
+
+            # Preparar respuesta JSON
+            response_data = {"user_id": user_id, "recommendations": top_recommendations}
+            return JSONResponse(content=jsonable_encoder(response_data))
+        else:
+            return JSONResponse(content=jsonable_encoder({"error": f"No se encontró el usuario con ID: {user_id}"}))
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
