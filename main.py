@@ -220,28 +220,25 @@ def developer_reviews_analysis_endpoint(desarrollador: str):
 
 # ------- ML RECOMENDACION - Títulos similares ----------
 
-@app.get("/recommendations/{title}")
-def get_recommendations(title: str):
+@app.get("/recomendacion_juego/{titulo}")
+def get_recomendacion_juego(titulo: str):
     
     # Lee el archivo parquet de la carpeta data
     current_directory = os.path.dirname(os.path.abspath(__file__))
-    path_to_parquet = os.path.join(current_directory, 'data', 'df_recomendacion_juego.parquet')
-    df_recomendacion_juego = pq.read_table(path_to_parquet).to_pandas()
-
-
-    df = df_recomendacion_juego
+    path_to_parquet = os.path.join(current_directory, 'data', 'df_mod_rec_1.parquet')
+    df_mod_rec_1 = pq.read_table(path_to_parquet).to_pandas()
 
     # Configuración de TF-IDF
     tfidf = TfidfVectorizer(stop_words='english')
-    df['ntags'] = df['ntags'].fillna('')
-    tfidf_matrix = tfidf.fit_transform(df['ntags'])
+    df_mod_rec_1['ntags'] = df_mod_rec_1['ntags'].fillna('')
+    tfidf_matrix = tfidf.fit_transform(df_mod_rec_1['ntags'])
     cosine_sim = linear_kernel(tfidf_matrix, tfidf_matrix)
 
-    indices = pd.Series(df.index, index=df['app_name']).drop_duplicates()
+    indices = pd.Series(df_mod_rec_1.index, index=df_mod_rec_1['app_name']).drop_duplicates()
 
     try:
         # Obtener el índice del juego en la matriz de similitud coseno
-        idx = indices[title]
+        idx = indices[titulo]
 
         # Obtener las puntuaciones de similitud para el juego
         sim_scores = list(enumerate(cosine_sim[idx]))
@@ -253,12 +250,12 @@ def get_recommendations(title: str):
         game_indices = [i[0] for i in sim_scores[1:6]]
 
         # Obtener los títulos de los 5 juegos más similares
-        recommendations = df['app_name'].iloc[game_indices]
+        recommendations = df_mod_rec_1['app_name'].iloc[game_indices]
 
-        return JSONResponse(content={'title': title, 'recommendations': recommendations.tolist()})
+        return JSONResponse(content={'title': titulo, 'recommendations': recommendations.tolist()})
 
     except KeyError:
-        raise HTTPException(status_code=404, detail=f'El juego {title} no se encuentra en el DataFrame.')
+        raise HTTPException(status_code=404, detail=f'El juego {titulo} no se encuentra en el DataFrame.')
     
 
 # ------- ML RECOMENDACION - Juegos recomendados para el usuario ----------
@@ -268,8 +265,8 @@ def get_recomendacion_usuario(user_id: str):
     
     # Lee el archivo parquet de la carpeta data
     current_directory = os.path.dirname(os.path.abspath(__file__))
-    path_to_parquet = os.path.join(current_directory, 'data', 'df_rec_reviews_muestra.parquet')
-    df_rec_reviews_muestra = pq.read_table(path_to_parquet).to_pandas()
+    path_to_parquet = os.path.join(current_directory, 'data', 'df_mod_rec_2.parquet')
+    df_mod_rec_2 = pq.read_table(path_to_parquet).to_pandas()
 
     try:
 
@@ -277,16 +274,16 @@ def get_recomendacion_usuario(user_id: str):
         tfidf = TfidfVectorizer(stop_words='english')
 
         # Rellenar los valores nulos en la columna 'app_name' con una cadena vacía
-        df_rec_reviews_muestra['app_name'] = df_rec_reviews_muestra['app_name'].fillna('')
+        df_mod_rec_2['app_name'] = df_mod_rec_2['app_name'].fillna('')
 
         # Aplicar la transformación TF-IDF a los datos de la columna 'app_name'
-        tfidf_matrix = tfidf.fit_transform(df_rec_reviews_muestra['app_name'])
+        tfidf_matrix = tfidf.fit_transform(df_mod_rec_2['app_name'])
 
         # Calcular la similitud coseno entre los juegos utilizando linear_kernel
         cosine_sim = linear_kernel(tfidf_matrix, tfidf_matrix)
 
         # Obtener el índice del usuario específico en el DataFrame
-        matching_users = df_rec_reviews_muestra[df_rec_reviews_muestra['user_id'] == user_id]
+        matching_users = df_mod_rec_2[df_mod_rec_2['user_id'] == user_id]
 
         if not matching_users.empty:
             user_index = matching_users.index[0]
@@ -295,8 +292,8 @@ def get_recomendacion_usuario(user_id: str):
             recommendations = []
             seen_games = set()  # Utilizar un conjunto para evitar duplicados
             for i, score in sorted(enumerate(cosine_sim[user_index]), key=lambda x: x[1], reverse=True):
-                if df_rec_reviews_muestra['recommend'][i] and df_rec_reviews_muestra['sentiment_analysis'][i] in [0, 1, 2]:
-                    app_name = df_rec_reviews_muestra['app_name'][i]
+                if df_mod_rec_2['recommend'][i] and df_mod_rec_2['sentiment_analysis'][i] in [0, 1, 2]:
+                    app_name = df_mod_rec_2['app_name'][i]
                     if app_name not in seen_games:
                         recommendations.append({"app_name": app_name, "similarity": score})
                         seen_games.add(app_name)
