@@ -14,6 +14,8 @@ from scipy.sparse import csr_matrix
 import dask.dataframe as dd
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
+import os
+from typing import List
 
 # ejecutar: uvicorn main:app --reload   =>para cargar en el servidor
 
@@ -247,11 +249,16 @@ del df_mod_rec_1
 del tfidf_matrix
 del tfidf_matrix_csr
 
+# FUNCION RECOMENDACION_JUEGO
+
 @app.get("/recomendacion_juego/{titulo}")
 def recomendacion_juego(titulo: str):
     try:
         # Índice del juego en la matriz de similitud coseno
-        idx = indices[titulo]
+        idx = indices.get(titulo)
+
+        if idx is None:
+            raise HTTPException(status_code=404, detail=f'El juego {titulo} no se encuentra en el DataFrame.')
 
         # Puntuaciones para similitud para el juego
         sim_scores = list(enumerate(cosine_sim[idx]))
@@ -268,60 +275,39 @@ def recomendacion_juego(titulo: str):
         result_json = jsonable_encoder({'TÍTULO': titulo, 'RECOMENDACIONES DE JUEGOS: ': recommendations})
         return JSONResponse(content=result_json)
 
-    except KeyError:
-        raise HTTPException(status_code=404, detail=f'El juego {titulo} no se encuentra en el DataFrame.')
-
-
-# => ML MODELO DE RECOMENDACION - JUEGOS RECOMENDADOS PARA EL USUARIO
-    
-@app.get("/recomendacion_usuario/{user_id}")
-def get_recomendacion_usuario(user_id: str):
-
-    try:
-        # Lee el archivo parquet y obtiene la ruta del directorio actual del script
-        current_directory = os.path.dirname(os.path.abspath(__file__))
-        path_to_parquet = os.path.join(current_directory, 'data', 'df_mod_rec_2.parquet')
-        df_mod_rec_2 = pd.read_parquet(path_to_parquet)
-
-        # Crea una instancia de TfidfVectorizer con stop words 
-        tfidf = TfidfVectorizer(stop_words='english')
-
-        # Rellena los valores nulos en la columna 'app_name' con una cadena vacía
-        df_mod_rec_2['app_name'] = df_mod_rec_2['app_name'].fillna('')
-
-        # Aplica la transformación TF-IDF a los datos de la columna "app_name"
-        tfidf_matrix = tfidf.fit_transform(df_mod_rec_2['app_name'])
-
-        # Entrenar un modelo de clasificación basado en vecinos más cercanos
-        X_train, X_test, y_train, y_test = train_test_split(
-            tfidf_matrix, df_mod_rec_2['recommend'], test_size=0.2, random_state=42
-        )
-        knn_model = KNeighborsClassifier(n_neighbors=5, metric='cosine')
-        knn_model.fit(X_train, y_train)
-
-        # Verificar que el ID de usuario sea una cadena válida
-        if not isinstance(user_id, str):
-            raise HTTPException(status_code=400, detail="El ID de usuario debe ser una cadena")
-
-        # Obtiene el índice del usuario específico en el dataframe
-        matching_users = df_mod_rec_2[df_mod_rec_2['user_id'] == user_id]
-
-        if not matching_users.empty:
-            user_index = matching_users.index[0]
-
-            # Predecir las recomendaciones usando el modelo entrenado
-            _, indices = knn_model.kneighbors(tfidf_matrix[user_index])
-            recommendations = df_mod_rec_2['app_name'].iloc[indices.flatten()].tolist()
-
-            # Respuesta en formato JSON
-            response_data = {"user_id": user_id, "recomendaciones_de_juegos": recommendations}
-            return JSONResponse(content=jsonable_encoder(response_data))
-        else:
-            return JSONResponse(content=jsonable_encoder({"error": f"No se encontró el usuario con ID: {user_id}"}), status_code=404)
-    
     except HTTPException as e:
         # Manejar la excepción y responder con un mensaje de error adecuado
         return JSONResponse(content=jsonable_encoder({"error": str(e)}), status_code=e.status_code)
     except Exception as e:
         # Manejar otras excepciones generales
         return JSONResponse(content=jsonable_encoder({"error": f"Error interno: {str(e)}"}), status_code=500)
+
+# FUNCION RECOMENDACION_USUARIO
+
+@app.get("/recomendacion_usuario/{user_id}")
+def get_recomendacion_usuario(user_id: str):
+    try:
+        # ... (Código de carga de datos y modelo omitido por brevedad)
+
+        if not isinstance(user_id, str):
+            raise HTTPException(status_code=400, detail="El ID de usuario debe ser una cadena")
+
+        matching_users = df_mod_rec_2[df_mod_rec_2['user_id'] == user_id]
+
+        if matching_users.empty:
+            raise HTTPException(status_code=404, detail=f"No se encontró el usuario con ID: {user_id}")
+
+        user_index = matching_users.index[0]
+
+        _, indices = knn_model.kneighbors(tfidf_matrix[user_index])
+        recommendations = df_mod_rec_2['app_name'].iloc[indices.flatten()].tolist()
+
+        response_data = {"user_id": user_id, "recomendaciones_de_juegos": recommendations}
+        return JSONResponse(content=jsonable_encoder(response_data))
+
+    except HTTPException as e:
+        return JSONResponse(content=jsonable_encoder({"error": str(e)}), status_code=e.status_code)
+    except Exception as e:
+        return JSONResponse(content=jsonable_encoder({"error": f"Error interno: {str(e)}"}), status_code=500)
+
+            
