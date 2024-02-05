@@ -1,4 +1,3 @@
-
 # LIBRERÍAS
 
 from typing import Union, List
@@ -14,9 +13,8 @@ import pandas as pd
 import pyarrow.parquet as pq
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import linear_kernel
-import dask.dataframe as dd
-from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
+
 
 # ejecutar: uvicorn main:app --reload   =>para cargar en el servidor
 
@@ -124,36 +122,36 @@ def userdata(user_id: str):
 @app.get("/user_for_genre/{genre}", response_model=dict)
 def user_for_genre(genre: str):
 
-   # Lee el archivo parquet y obtiene la ruta del directorio actual del script
+    # Lee el archivo parquet y obtiene la ruta del directorio actual del script
     current_directory = os.path.dirname(os.path.abspath(__file__))
     
-    # Carga los datos de juegos y géneros como un DataFrame de Dask
+    # Carga los datos de juegos y géneros
     path_to_games_parquet = os.path.join(current_directory, 'data', 'df_games_user_genre.parquet')
-    df_games_user_genre = dd.read_parquet(path_to_games_parquet)
-
-    # Carga los datos de usuarios y horas jugadas como un DataFrame de Dask
+    df_games_user_genre = pq.read_table(path_to_games_parquet).to_pandas()
+    
+    # Carga los datos de usuarios y horas jugadas
     path_to_users_parquet = os.path.join(current_directory, 'data', 'df_user_horas_juego.parquet')
-    df_user_horas_juego = dd.read_parquet(path_to_users_parquet)
+    df_user_horas_juego = pq.read_table(path_to_users_parquet).to_pandas()
 
-    # Realiza la operación de merge utilizando Dask
-    df_genres_hours = dd.merge(df_games_user_genre, df_user_horas_juego, on='item_id', how='right')
+    # Une ambos dataframes
+    df_genres_hours = df_games_user_genre.merge(df_user_horas_juego, on='item_id', how='right')
 
-    # Filtra el DataFrame para obtener solo las filas relacionadas con el género dado
+    # Filtra el dataframe para obtener solo las filas relacionadas con el género dado
     df_filtered = df_genres_hours[df_genres_hours['genres'] == genre]
 
-    if df_filtered.compute().empty:
+    if df_filtered.empty:
         raise HTTPException(status_code=404, detail="No data found for the given genre")
 
     # Encuentra el usuario que acumula más horas jugadas para el género
-    max_user = df_filtered.groupby('user_id')['playtime_forever'].sum().idxmax().compute()
+    max_user = df_filtered.groupby('user_id')['playtime_forever'].sum().idxmax()
 
-    # Filtra el DataFrame para obtener solo las filas relacionadas con el usuario que acumula más horas
+    # Filtra el dataframe para obtener solo las filas relacionadas con el usuario que acumula más horas
     df_user_max_hours = df_filtered[df_filtered['user_id'] == max_user]
 
     # Agrupa por año y suma las horas jugadas
-    horas_por_anio = df_user_max_hours.groupby('anio')['playtime_forever'].sum().compute()
+    horas_por_anio = df_user_max_hours.groupby('anio')['playtime_forever'].sum()
 
-    # Construye el diccionario de resultados
+    # Construiye el diccionario de resultados
     result_dict = {
         "Usuario con más horas jugadas para Género X": max_user,
         "Horas jugadas": [{"Año": int(year), "Horas": int(hours)} for year, hours in horas_por_anio.reset_index().to_dict(orient='split')['data']]
@@ -162,8 +160,8 @@ def user_for_genre(genre: str):
     result_json = jsonable_encoder(result_dict)
     return JSONResponse(content=result_json)
 
-      
-      
+    
+
 # => FUNCION BEST_DEVELOPER_YEAR
 
 
