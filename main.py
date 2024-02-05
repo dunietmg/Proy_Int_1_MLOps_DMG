@@ -1,10 +1,6 @@
 
 # LIBRERÍAS
 
-from typing import Union, List
-import os
-import string
-import re
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
@@ -14,10 +10,10 @@ import pandas as pd
 import pyarrow.parquet as pq
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import linear_kernel
+from scipy.sparse import csr_matrix
 import dask.dataframe as dd
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
-from scipy.sparse import csr_matrix
 
 # ejecutar: uvicorn main:app --reload   =>para cargar en el servidor
 
