@@ -259,12 +259,11 @@ def get_recomendacion_juego(titulo: str):
 
     except KeyError:
         raise HTTPException(status_code=404, detail=f'El juego {titulo} no se encuentra en el DataFrame.')
-    
 
+    
+    
 # => ML MODELO DE RECOMENDACION - JUEGOS RECOMENDADOS PARA EL USUARIO
     
-
-
 
 @app.get("/recomendacion_usuario/{user_id}")
 def get_recomendacion_usuario(user_id: str):
