@@ -222,15 +222,16 @@ def developer_reviews_analysis_endpoint(desarrollador: str):
 
 # => ML MODELO DE RECOMENDACION - TITULOS DE JUEGOS SIMILARES
 
+
 @app.get("/recomendacion_juego/{titulo}")
 def get_recomendacion_juego(titulo: str):
     
-    # Lee el archivo parquet y obtiene la ruta del directorio actual del script
+    # Lee el archivo parquet de la carpeta data
     current_directory = os.path.dirname(os.path.abspath(__file__))
     path_to_parquet = os.path.join(current_directory, 'data', 'df_mod_rec_1.parquet')
     df_mod_rec_1 = pq.read_table(path_to_parquet).to_pandas()
 
-    # Configura TF-IDF
+    # Configuración de TF-IDF
     tfidf = TfidfVectorizer(stop_words='english')
     df_mod_rec_1['ntags'] = df_mod_rec_1['ntags'].fillna('')
     tfidf_matrix = tfidf.fit_transform(df_mod_rec_1['ntags'])
@@ -239,29 +240,29 @@ def get_recomendacion_juego(titulo: str):
     indices = pd.Series(df_mod_rec_1.index, index=df_mod_rec_1['app_name']).drop_duplicates()
 
     try:
-        # Índice del juego en la matriz de similitud coseno
+        # Obtener el índice del juego en la matriz de similitud coseno
         idx = indices[titulo]
 
-        # Puntuaciones de similitud para el juego
+        # Obtener las puntuaciones de similitud para el juego
         sim_scores = list(enumerate(cosine_sim[idx]))
 
-        # Puntuaciones de similitud por orden descendente
+        # Ordenar las puntuaciones de similitud por orden descendente
         sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)
 
-        # Índices de los 5 juegos más similares
+        # Obtener los índices de los 5 juegos más similares
         game_indices = [i[0] for i in sim_scores[1:6]]
 
-        # Títulos de los 5 juegos más similares
+        # Obtener los títulos de los 5 juegos más similares
         recommendations = df_mod_rec_1['app_name'].iloc[game_indices]
 
-        result_json = jsonable_encoder({'TÍTULO': titulo, 'RECOMENDACIONES DE JUEGOS: ': recommendations.tolist()})
-        return JSONResponse(content=result_json)
+        return JSONResponse(content={'title': titulo, 'recommendations': recommendations.tolist()})
 
     except KeyError:
         raise HTTPException(status_code=404, detail=f'El juego {titulo} no se encuentra en el DataFrame.')
+    
 
     
-    
+
 # => ML MODELO DE RECOMENDACION - JUEGOS RECOMENDADOS PARA EL USUARIO
     
 
