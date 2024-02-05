@@ -69,9 +69,10 @@ def developer(desarrollador: str):
     resultado['porcentaje_gratuito'] = ((resultado['cantidad_items_gratuitos'] / resultado['cantidad_items']) * 100).round(2)
 
     # Convierte el resultado a formato JSON
-    resultado_json = resultado.to_dict(orient='records')
+    resultado_json = resultado.to_json(orient='records')
 
-    return resultado_json
+    return JSONResponse(content=resultado_json)
+    
 
 # => FUNCION USERDATA
 
@@ -263,9 +264,6 @@ def get_recomendacion_juego(titulo: str):
 
 # => ML MODELO DE RECOMENDACION - JUEGOS RECOMENDADOS PARA EL USUARIO
     
-
-
-
 @app.get("/recomendacion_usuario/{user_id}")
 def get_recomendacion_usuario(user_id: str):
 
