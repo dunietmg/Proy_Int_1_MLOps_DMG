@@ -225,36 +225,37 @@ def developer_reviews_analysis_endpoint(desarrollador: str):
 
 # => ML MODELO DE RECOMENDACION - TITULOS DE JUEGOS SIMILARES
 
+# Lee el archivo parquet y obtiene la ruta del directorio actual del script
+current_directory = os.path.dirname(os.path.abspath(__file__))
+path_to_parquet = os.path.join(current_directory, 'data', 'df_mod_rec_1.parquet')
+
+# Solo cargamos las columnas necesarias para la matriz TF-IDF
+df_mod_rec_1 = pq.read_table(path_to_parquet, columns=['app_name', 'ntags']).to_pandas()
+
+# Configura TF-IDF
+tfidf = TfidfVectorizer(stop_words='english')
+df_mod_rec_1['ntags'] = df_mod_rec_1['ntags'].fillna('')
+tfidf_matrix = tfidf.fit_transform(df_mod_rec_1['ntags'])
+
+# Convierte la matriz a formato CSR para ahorrar memoria
+tfidf_matrix_csr = csr_matrix(tfidf_matrix)
+
+# Calcula la similitud del coseno utilizando el producto escalar lineal (linear_kernel)
+cosine_sim = linear_kernel(tfidf_matrix_csr, tfidf_matrix_csr)
+
+# Crea una serie de índices utilizando el nombre de la aplicación ('app_name') como índice
+indices = pd.Series(df_mod_rec_1.index, index=df_mod_rec_1['app_name']).drop_duplicates()
+
+# Libera memoria eliminando variables no necesarias
+del df_mod_rec_1
+del tfidf_matrix
+del tfidf_matrix_csr
+
 @app.get("/recomendacion_juego/{titulo}")
 def get_recomendacion_juego(titulo: str):
-    # Lee el archivo parquet y obtiene la ruta del directorio actual del script
-    current_directory = os.path.dirname(os.path.abspath(__file__))
-    path_to_parquet = os.path.join(current_directory, 'data', 'df_mod_rec_1.parquet')
-    
-    # Solo cargamos las columnas necesarias para la matriz TF-IDF
-    df_mod_rec_1 = pq.read_table(path_to_parquet, columns=['app_name', 'ntags']).to_pandas()
-
-    # Configura TF-IDF
-    tfidf = TfidfVectorizer(stop_words='english')
-    df_mod_rec_1['ntags'] = df_mod_rec_1['ntags'].fillna('')
-    tfidf_matrix = tfidf.fit_transform(df_mod_rec_1['ntags'])
-
-    # Convierte la matriz a formato CSR para ahorrar memoria
-    tfidf_matrix_csr = csr_matrix(tfidf_matrix)
-
-    # Calcula la similitud del coseno utilizando el producto escalar lineal (linear_kernel)
-    cosine_sim = linear_kernel(tfidf_matrix_csr, tfidf_matrix_csr)
-
-    # Crea una serie de índices utilizando el nombre de la aplicación ('app_name') como índice
-    indices = pd.Series(df_mod_rec_1.index, index=df_mod_rec_1['app_name']).drop_duplicates()
-
     # Verifica la existencia del juego en el DataFrame
     if titulo not in indices:
         return JSONResponse(content={'error': f'El juego {titulo} no se encuentra en el DataFrame.'}, status_code=404)
-
-    # Libera memoria eliminando variables no necesarias
-    del df_mod_rec_1
-    del tfidf_matrix
 
     # Índice del juego en la matriz de similitud coseno
     idx = indices[titulo]
