@@ -236,8 +236,11 @@ def get_recomendacion_juego(titulo: str):
     tfidf = TfidfVectorizer(stop_words='english')
     df_mod_rec_1['ntags'] = df_mod_rec_1['ntags'].fillna('')
     tfidf_matrix = tfidf.fit_transform(df_mod_rec_1['ntags'])
+
+    # Calcula la similitud del coseno utilizando el producto escalar lineal (linear_kernel)
     cosine_sim = linear_kernel(tfidf_matrix, tfidf_matrix)
 
+    # Crea una serie de índices utilizando el nombre de la aplicación ('app_name') como índice
     indices = pd.Series(df_mod_rec_1.index, index=df_mod_rec_1['app_name']).drop_duplicates()
 
     try:
