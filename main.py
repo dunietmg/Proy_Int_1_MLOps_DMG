@@ -1,6 +1,10 @@
 
 # LIBRERÍAS
 
+from typing import Union, List
+import os
+import string
+import re
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
@@ -10,12 +14,9 @@ import pandas as pd
 import pyarrow.parquet as pq
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import linear_kernel
-from scipy.sparse import csr_matrix
 import dask.dataframe as dd
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
-import os
-from typing import List
 
 # ejecutar: uvicorn main:app --reload   =>para cargar en el servidor
 
@@ -153,12 +154,10 @@ def user_for_genre(genre: str):
     horas_por_anio = df_user_max_hours.groupby('anio')['playtime_forever'].sum().compute()
 
     # Construye el diccionario de resultados
-    
     result_dict = {
-            "Género": genre,
-            "Usuario con más horas jugadas": max_user,
-            "Horas jugadas": [{"Año": int(year), "Horas": int(hours)} for year, hours in horas_por_anio.reset_index().to_dict(orient='split')['data']]
-        }
+        "Usuario con más horas jugadas para Género X": max_user,
+        "Horas jugadas": [{"Año": int(year), "Horas": int(hours)} for year, hours in horas_por_anio.reset_index().to_dict(orient='split')['data']]
+    }
 
     result_json = jsonable_encoder(result_dict)
     return JSONResponse(content=result_json)
@@ -223,91 +222,98 @@ def developer_reviews_analysis_endpoint(desarrollador: str):
 
 # => ML MODELO DE RECOMENDACION - TITULOS DE JUEGOS SIMILARES
 
-# Lee el archivo parquet y obtiene la ruta del directorio actual del script
-current_directory = os.path.dirname(os.path.abspath(__file__))
-path_to_parquet = os.path.join(current_directory, 'data', 'df_mod_rec_1.parquet')
-
-# Solo cargamos las columnas necesarias para la matriz TF-IDF
-df_mod_rec_1 = pq.read_table(path_to_parquet, columns=['app_name', 'ntags']).to_pandas()
-
-# Configura TF-IDF
-tfidf = TfidfVectorizer(stop_words='english')
-df_mod_rec_1['ntags'] = df_mod_rec_1['ntags'].fillna('')
-tfidf_matrix = tfidf.fit_transform(df_mod_rec_1['ntags'])
-
-# Convierte la matriz a formato CSR para ahorrar memoria
-tfidf_matrix_csr = csr_matrix(tfidf_matrix)
-
-# Calcula la similitud del coseno utilizando el producto escalar lineal (linear_kernel)
-cosine_sim = linear_kernel(tfidf_matrix_csr, tfidf_matrix_csr)
-
-# Crea una serie de índices utilizando el nombre de la aplicación ('app_name') como índice
-indices = pd.Series(df_mod_rec_1.index, index=df_mod_rec_1['app_name']).drop_duplicates()
-
-# Libera memoria eliminando variables no necesarias
-del df_mod_rec_1
-del tfidf_matrix
-del tfidf_matrix_csr
-
-# FUNCION RECOMENDACION_JUEGO
-
 @app.get("/recomendacion_juego/{titulo}")
-def recomendacion_juego(titulo: str):
+def get_recomendacion_juego(titulo: str):
+    
+    # Lee el archivo parquet y obtiene la ruta del directorio actual del script
+    current_directory = os.path.dirname(os.path.abspath(__file__))
+    path_to_parquet = os.path.join(current_directory, 'data', 'df_mod_rec_1.parquet')
+    df_mod_rec_1 = pq.read_table(path_to_parquet).to_pandas()
+
+    # Configura TF-IDF
+    tfidf = TfidfVectorizer(stop_words='english')
+    df_mod_rec_1['ntags'] = df_mod_rec_1['ntags'].fillna('')
+    tfidf_matrix = tfidf.fit_transform(df_mod_rec_1['ntags'])
+    cosine_sim = linear_kernel(tfidf_matrix, tfidf_matrix)
+
+    indices = pd.Series(df_mod_rec_1.index, index=df_mod_rec_1['app_name']).drop_duplicates()
+
     try:
         # Índice del juego en la matriz de similitud coseno
-        idx = indices.get(titulo)
+        idx = indices[titulo]
 
-        if idx is None:
-            raise HTTPException(status_code=404, detail=f'El juego {titulo} no se encuentra en el DataFrame.')
-
-        # Puntuaciones para similitud para el juego
+        # Puntuaciones de similitud para el juego
         sim_scores = list(enumerate(cosine_sim[idx]))
 
-        # Ordena las puntuaciones de forma descendente
+        # Puntuaciones de similitud por orden descendente
         sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)
 
         # Índices de los 5 juegos más similares
         game_indices = [i[0] for i in sim_scores[1:6]]
 
         # Títulos de los 5 juegos más similares
-        recommendations = indices.index[game_indices].tolist()
+        recommendations = df_mod_rec_1['app_name'].iloc[game_indices]
 
-        result_json = jsonable_encoder({'TÍTULO': titulo, 'RECOMENDACIONES DE JUEGOS: ': recommendations})
+        result_json = jsonable_encoder({'TÍTULO': titulo, 'RECOMENDACIONES DE JUEGOS: ': recommendations.tolist()})
         return JSONResponse(content=result_json)
 
+    except KeyError:
+        raise HTTPException(status_code=404, detail=f'El juego {titulo} no se encuentra en el DataFrame.')
+    
+
+# => ML MODELO DE RECOMENDACION - JUEGOS RECOMENDADOS PARA EL USUARIO
+    
+
+
+
+@app.get("/recomendacion_usuario/{user_id}")
+def get_recomendacion_usuario(user_id: str):
+
+    try:
+        # Lee el archivo parquet y obtiene la ruta del directorio actual del script
+        current_directory = os.path.dirname(os.path.abspath(__file__))
+        path_to_parquet = os.path.join(current_directory, 'data', 'df_mod_rec_2.parquet')
+        df_mod_rec_2 = pd.read_parquet(path_to_parquet)
+
+        # Crea una instancia de TfidfVectorizer con stop words 
+        tfidf = TfidfVectorizer(stop_words='english')
+
+        # Rellena los valores nulos en la columna 'app_name' con una cadena vacía
+        df_mod_rec_2['app_name'] = df_mod_rec_2['app_name'].fillna('')
+
+        # Aplica la transformación TF-IDF a los datos de la columna "app_name"
+        tfidf_matrix = tfidf.fit_transform(df_mod_rec_2['app_name'])
+
+        # Entrenar un modelo de clasificación basado en vecinos más cercanos
+        X_train, X_test, y_train, y_test = train_test_split(
+            tfidf_matrix, df_mod_rec_2['recommend'], test_size=0.2, random_state=42
+        )
+        knn_model = KNeighborsClassifier(n_neighbors=5, metric='cosine')
+        knn_model.fit(X_train, y_train)
+
+        # Verificar que el ID de usuario sea una cadena válida
+        if not isinstance(user_id, str):
+            raise HTTPException(status_code=400, detail="El ID de usuario debe ser una cadena")
+
+        # Obtiene el índice del usuario específico en el dataframe
+        matching_users = df_mod_rec_2[df_mod_rec_2['user_id'] == user_id]
+
+        if not matching_users.empty:
+            user_index = matching_users.index[0]
+
+            # Predecir las recomendaciones usando el modelo entrenado
+            _, indices = knn_model.kneighbors(tfidf_matrix[user_index])
+            recommendations = df_mod_rec_2['app_name'].iloc[indices.flatten()].tolist()
+
+            # Respuesta en formato JSON
+            response_data = {"user_id": user_id, "recomendaciones_de_juegos": recommendations}
+            return JSONResponse(content=jsonable_encoder(response_data))
+        else:
+            return JSONResponse(content=jsonable_encoder({"error": f"No se encontró el usuario con ID: {user_id}"}), status_code=404)
+    
     except HTTPException as e:
         # Manejar la excepción y responder con un mensaje de error adecuado
         return JSONResponse(content=jsonable_encoder({"error": str(e)}), status_code=e.status_code)
     except Exception as e:
         # Manejar otras excepciones generales
         return JSONResponse(content=jsonable_encoder({"error": f"Error interno: {str(e)}"}), status_code=500)
-
-# FUNCION RECOMENDACION_USUARIO
-
-@app.get("/recomendacion_usuario/{user_id}")
-def get_recomendacion_usuario(user_id: str):
-    try:
-        # ... (Código de carga de datos y modelo omitido por brevedad)
-
-        if not isinstance(user_id, str):
-            raise HTTPException(status_code=400, detail="El ID de usuario debe ser una cadena")
-
-        matching_users = df_mod_rec_2[df_mod_rec_2['user_id'] == user_id]
-
-        if matching_users.empty:
-            raise HTTPException(status_code=404, detail=f"No se encontró el usuario con ID: {user_id}")
-
-        user_index = matching_users.index[0]
-
-        _, indices = knn_model.kneighbors(tfidf_matrix[user_index])
-        recommendations = df_mod_rec_2['app_name'].iloc[indices.flatten()].tolist()
-
-        response_data = {"user_id": user_id, "recomendaciones_de_juegos": recommendations}
-        return JSONResponse(content=jsonable_encoder(response_data))
-
-    except HTTPException as e:
-        return JSONResponse(content=jsonable_encoder({"error": str(e)}), status_code=e.status_code)
-    except Exception as e:
-        return JSONResponse(content=jsonable_encoder({"error": f"Error interno: {str(e)}"}), status_code=500)
-
-            
