@@ -154,10 +154,12 @@ def user_for_genre(genre: str):
     horas_por_anio = df_user_max_hours.groupby('anio')['playtime_forever'].sum().compute()
 
     # Construye el diccionario de resultados
+    
     result_dict = {
-        "Usuario con más horas jugadas para Género X": max_user,
-        "Horas jugadas": [{"Año": int(year), "Horas": int(hours)} for year, hours in horas_por_anio.reset_index().to_dict(orient='split')['data']]
-    }
+            "Género": genre,
+            "Usuario con más horas jugadas": max_user,
+            "Horas jugadas": [{"Año": int(year), "Horas": int(hours)} for year, hours in horas_por_anio.reset_index().to_dict(orient='split')['data']]
+        }
 
     result_json = jsonable_encoder(result_dict)
     return JSONResponse(content=result_json)
@@ -263,9 +265,6 @@ def get_recomendacion_juego(titulo: str):
 
 # => ML MODELO DE RECOMENDACION - JUEGOS RECOMENDADOS PARA EL USUARIO
     
-
-
-
 @app.get("/recomendacion_usuario/{user_id}")
 def get_recomendacion_usuario(user_id: str):
 

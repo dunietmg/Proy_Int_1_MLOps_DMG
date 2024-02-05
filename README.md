@@ -89,9 +89,9 @@ Una vez analizados y transformados los datos primarios realizando las tareas de 
 
 ## **Modelos de Recomendación (ML)**
 
-+ def **recomendacion_juego (id de producto)**: Ingresando el id de producto (input), devuelve una lista con 5 juegos recomendados similares al ingresado.
++ def **recomendacion_juego (id de producto)**: Ingresando el id de producto (input), devuelve una lista con 5 juegos recomendados similares al ingresado utilizando el modelo de Similitud del coseno.
 
-+ def **recomendacion_usuario (id de usuario)**: Ingresando el id de un usuario (input), retorna una lista con 5 juegos recomendados para dicho usuario.
++ def **recomendacion_usuario (id de usuario)**: Ingresando el id de un usuario (input), retorna una lista con 5 juegos recomendados para dicho usuario utilizando el modelo KNeighborsClassifier.
 
 Los detalles de los modelos de recomendación se pueden consultar en el siguiente [notebook](https://colab.research.google.com/drive/1KKGA4sccL7xBIOV4OcsLZQstLWcQABDN?usp=sharing) de Google Colaboratory.
 
