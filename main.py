@@ -243,23 +243,25 @@ def get_recomendacion_juego(titulo: str):
         # Índice del juego en la matriz de similitud coseno
         idx = indices[titulo]
 
-        # Puntuaciones de similitud para el juego
+        # Puntuaciones para similitud para el juego
         sim_scores = list(enumerate(cosine_sim[idx]))
 
-        # Puntuaciones de similitud por orden descendente
+        # Ordena las puntuaciones de forma descendente
         sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)
 
         # Índices de los 5 juegos más similares
         game_indices = [i[0] for i in sim_scores[1:6]]
 
         # Títulos de los 5 juegos más similares
-        recommendations = df_mod_rec_1['app_name'].iloc[game_indices]
+        recommendations = df_mod_rec_1['app_name'].iloc[game_indices].tolist()
 
-        result_json = jsonable_encoder({'TÍTULO': titulo, 'RECOMENDACIONES DE JUEGOS: ': recommendations.tolist()})
-        return JSONResponse(content=result_json)
+        # Devolver las recomendaciones como respuesta JSON
+        return JSONResponse(content={"titulo": titulo, "recomendaciones": recommendations})
 
     except KeyError:
-        raise HTTPException(status_code=404, detail=f'El juego {titulo} no se encuentra en el DataFrame.')
+        # Lanzar una excepción HTTP 404 si el juego no se encuentra en el DataFrame
+        raise HTTPException(status_code=404, detail=f"El juego '{titulo}' no se encuentra en el DataFrame.")
+
     
 
 # => ML MODELO DE RECOMENDACION - JUEGOS RECOMENDADOS PARA EL USUARIO
