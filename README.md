@@ -43,6 +43,11 @@ Los Datasets originales (sin procesar) se pueden consultar siguiendo este [Link]
 
 Los datasets de trabajo se entregaron por parte de la empresa en formato .JSON con columnas de datos anidados, razón por la cual se procesaron utilizando la función "normalize"  para aplanar las columnas y obtener los datos en el formato adecuado.
 
+Se  analizó la estructura del dataset, su cantidad de filas y columnas, tipos de datos, datos nulos, relacion entre los mismos, etc.
+
+<p align=center>  <img src="https://scontent.fpss6-1.fna.fbcdn.net/v/t39.30808-6/425713646_7073953302686759_2854334056812223078_n.jpg?_nc_cat=111&ccb=1-7&_nc_sid=3635dc&_nc_eui2=AeEM_qUC8yY_8ID43FVNsbAIYFyFBi8Eq29gXIUGLwSrb3bRTxXA0xPQg2K5SRWZBXoHlINkaLUieKGSDt5Q6Thi&_nc_ohc=_EMACpJywXgAX_gA-GH&_nc_ht=scontent.fpss6-1.fna&oh=00_AfDpxeUH56xWC8YT5PEq65FnY00XhEey8PP9lzkDdKPOfw&oe=65C642EE"  height=300>
+</p>
+
 El EDA realizado se puede consultar en el siguiente [notebook](https://colab.research.google.com/drive/1KFP8n18x3_jHysXZkNCAxP8-r6BTAo3p?usp=sharing) de Google Colaboratory.
 
 
