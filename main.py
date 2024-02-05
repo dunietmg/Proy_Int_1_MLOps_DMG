@@ -1,5 +1,3 @@
-# LIBRERÍAS
-
 from typing import Union, List
 import os
 import string
@@ -13,10 +11,9 @@ import pandas as pd
 import pyarrow.parquet as pq
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import linear_kernel
+import dask.dataframe as dd
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
-
-
 
 # ejecutar: uvicorn main:app --reload   =>para cargar en el servidor
 
@@ -69,10 +66,9 @@ def developer(desarrollador: str):
     resultado['porcentaje_gratuito'] = ((resultado['cantidad_items_gratuitos'] / resultado['cantidad_items']) * 100).round(2)
 
     # Convierte el resultado a formato JSON
-    resultado_json = resultado.to_json(orient='records')
+    resultado_json = resultado.to_dict(orient='records')
 
-    return JSONResponse(content=resultado_json)
-    
+    return resultado_json
 
 # => FUNCION USERDATA
 
@@ -125,36 +121,36 @@ def userdata(user_id: str):
 @app.get("/user_for_genre/{genre}", response_model=dict)
 def user_for_genre(genre: str):
 
-    # Lee el archivo parquet y obtiene la ruta del directorio actual del script
+   # Lee el archivo parquet y obtiene la ruta del directorio actual del script
     current_directory = os.path.dirname(os.path.abspath(__file__))
     
-    # Carga los datos de juegos y géneros
+    # Carga los datos de juegos y géneros como un DataFrame de Dask
     path_to_games_parquet = os.path.join(current_directory, 'data', 'df_games_user_genre.parquet')
-    df_games_user_genre = pq.read_table(path_to_games_parquet).to_pandas()
-    
-    # Carga los datos de usuarios y horas jugadas
+    df_games_user_genre = dd.read_parquet(path_to_games_parquet)
+
+    # Carga los datos de usuarios y horas jugadas como un DataFrame de Dask
     path_to_users_parquet = os.path.join(current_directory, 'data', 'df_user_horas_juego.parquet')
-    df_user_horas_juego = pq.read_table(path_to_users_parquet).to_pandas()
+    df_user_horas_juego = dd.read_parquet(path_to_users_parquet)
 
-    # Une ambos dataframes
-    df_genres_hours = df_games_user_genre.merge(df_user_horas_juego, on='item_id', how='right')
+    # Realiza la operación de merge utilizando Dask
+    df_genres_hours = dd.merge(df_games_user_genre, df_user_horas_juego, on='item_id', how='right')
 
-    # Filtra el dataframe para obtener solo las filas relacionadas con el género dado
+    # Filtra el DataFrame para obtener solo las filas relacionadas con el género dado
     df_filtered = df_genres_hours[df_genres_hours['genres'] == genre]
 
-    if df_filtered.empty:
+    if df_filtered.compute().empty:
         raise HTTPException(status_code=404, detail="No data found for the given genre")
 
     # Encuentra el usuario que acumula más horas jugadas para el género
-    max_user = df_filtered.groupby('user_id')['playtime_forever'].sum().idxmax()
+    max_user = df_filtered.groupby('user_id')['playtime_forever'].sum().idxmax().compute()
 
-    # Filtra el dataframe para obtener solo las filas relacionadas con el usuario que acumula más horas
+    # Filtra el DataFrame para obtener solo las filas relacionadas con el usuario que acumula más horas
     df_user_max_hours = df_filtered[df_filtered['user_id'] == max_user]
 
     # Agrupa por año y suma las horas jugadas
-    horas_por_anio = df_user_max_hours.groupby('anio')['playtime_forever'].sum()
+    horas_por_anio = df_user_max_hours.groupby('anio')['playtime_forever'].sum().compute()
 
-    # Construiye el diccionario de resultados
+    # Construye el diccionario de resultados
     result_dict = {
         "Usuario con más horas jugadas para Género X": max_user,
         "Horas jugadas": [{"Año": int(year), "Horas": int(hours)} for year, hours in horas_por_anio.reset_index().to_dict(orient='split')['data']]
@@ -163,8 +159,8 @@ def user_for_genre(genre: str):
     result_json = jsonable_encoder(result_dict)
     return JSONResponse(content=result_json)
 
-    
-
+      
+      
 # => FUNCION BEST_DEVELOPER_YEAR
 
 
@@ -243,30 +239,28 @@ def get_recomendacion_juego(titulo: str):
         # Índice del juego en la matriz de similitud coseno
         idx = indices[titulo]
 
-        # Puntuaciones para similitud para el juego
+        # Puntuaciones de similitud para el juego
         sim_scores = list(enumerate(cosine_sim[idx]))
 
-        # Ordena las puntuaciones de forma descendente
+        # Puntuaciones de similitud por orden descendente
         sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)
 
         # Índices de los 5 juegos más similares
         game_indices = [i[0] for i in sim_scores[1:6]]
 
         # Títulos de los 5 juegos más similares
-        recommendations = df_mod_rec_1['app_name'].iloc[game_indices].tolist()
+        recommendations = df_mod_rec_1['app_name'].iloc[game_indices]
 
-        # Devolver las recomendaciones como respuesta JSON
-        return JSONResponse(content={"titulo": titulo, "recomendaciones": recommendations})
+        result_json = jsonable_encoder({'TÍTULO': titulo, 'RECOMENDACIONES DE JUEGOS: ': recommendations.tolist()})
+        return JSONResponse(content=result_json)
 
     except KeyError:
-        # Lanzar una excepción HTTP 404 si el juego no se encuentra en el DataFrame
-        raise HTTPException(status_code=404, detail=f"El juego '{titulo}' no se encuentra en el DataFrame.")
-
+        raise HTTPException(status_code=404, detail=f'El juego {titulo} no se encuentra en el DataFrame.')
     
-
+   
 # => ML MODELO DE RECOMENDACION - JUEGOS RECOMENDADOS PARA EL USUARIO
-    
-@app.get("/recomendacion_usuario/{user_id}")
+
+app.get("/recomendacion_usuario/{user_id}")
 def get_recomendacion_usuario(user_id: str):
 
     try:
@@ -285,8 +279,7 @@ def get_recomendacion_usuario(user_id: str):
         tfidf_matrix = tfidf.fit_transform(df_mod_rec_2['app_name'])
 
         # Entrenar un modelo de clasificación basado en vecinos más cercanos
-        X_train, X_test, y_train, y_test = train_test_split(
-        tfidf_matrix, df_mod_rec_2['recommend'], test_size=0.2, random_state=42)
+        X_train, X_test, y_train, y_test = train_test_split(tfidf_matrix, df_mod_rec_2['recommend'], test_size=0.2, random_state=42)
         knn_model = KNeighborsClassifier(n_neighbors=5, metric='cosine')
         knn_model.fit(X_train, y_train)
 
@@ -303,16 +296,18 @@ def get_recomendacion_usuario(user_id: str):
             # Predecir las recomendaciones usando el modelo entrenado
             _, indices = knn_model.kneighbors(tfidf_matrix[user_index])
             recommendations = df_mod_rec_2['app_name'].iloc[indices.flatten()].tolist()
-
+            
             # Respuesta en formato JSON
             response_data = {"user_id": user_id, "recomendaciones_de_juegos": recommendations}
             return JSONResponse(content=jsonable_encoder(response_data))
         else:
             return JSONResponse(content=jsonable_encoder({"error": f"No se encontró el usuario con ID: {user_id}"}), status_code=404)
-    
+        
     except HTTPException as e:
         # Manejar la excepción y responder con un mensaje de error adecuado
         return JSONResponse(content=jsonable_encoder({"error": str(e)}), status_code=e.status_code)
     except Exception as e:
         # Manejar otras excepciones generales
         return JSONResponse(content=jsonable_encoder({"error": f"Error interno: {str(e)}"}), status_code=500)
+        
+
