@@ -85,7 +85,7 @@ Las consultas que se pueden realizar desde la API son las siguientes:
 
 ## **Análisis exploratorio de los datos (EDA)**
 
-Una vez analizados y transformados los datos primarios realizando las tareas de limpieza necesarias, se procede a analizar las relaciones que hay entre las variables del dataset, (outliers o anomalías, patrones, correlaciones entre variables, analisis de reviews, etc.) A partir de este análisis se procedió a realizar los modelos de recomendación. 
+Una vez analizados y transformados los datos primarios realizando las tareas de limpieza necesarias, se procede a analizar las relaciones que hay entre las variables del dataset, (outliers o anomalías, patrones, analisis de reviews, etc.) A partir de este análisis se procedió a realizar los modelos de recomendación. Los detalles se pueden consultar en el siguiente [notebook](https://colab.research.google.com/drive/1jOa__1O6GtC3g8Oi3AeR3nL-Cu1_xVrW?usp=sharing) de Google Colaboratory.
 
 ## **Modelos de Recomendación (ML)**
 
