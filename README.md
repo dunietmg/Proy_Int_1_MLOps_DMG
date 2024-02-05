@@ -37,22 +37,22 @@ Los tres archivos para iniciar el trabajo se entregaron en formato JSON:
 
 - ***output_steam_games.json:*** contiene los datos relacionados a los juegos en sí, como títulos, generos, desarrolladores, precios, fechas de lanzamientos, especificaciones, etc.
 
-Los Datasets originales (sin procesar) se pueden consultar siguiendo este [Link](https://drive.google.com/drive/folders/1k_f3odHUPy3nQOt9qzOuMQnDcNpsX2En?usp=sharing).
+Los Datasets originales (sin procesar) se pueden consultar siguiendo este [Link](https://drive.google.com/drive/folders/1Ua1G9T11NrBhfl1oZmb8ITni_CrdVfAx?usp=sharing).
 
 ## **Análisis Exploratorio de los Datos (EDA)**
 
 Los datasets de trabajo se entregaron por parte de la empresa en formato .JSON con columnas de datos anidados, razón por la cual se procesaron utilizando la función "normalize"  para aplanar las columnas y obtener los datos en el formato adecuado.
 
-El EDA realizado se puede consultar en el siguiente [notebook](https://colab.research.google.com/drive/1KFP8n18x3_jHysXZkNCAxP8-r6BTAo3p?usp=sharing) de Google Colaboratory.
+El EDA realizado se puede consultar en el siguiente [notebook](https://colab.research.google.com/drive/1AkbvbQItQOOqCrIzBDwhyAuG0QGKeGoD?usp=sharing) de Google Colaboratory.
 
 
 ## **Extracción, Transformación y Carga de los datos (ETL)**
 
 Se realizaron las transformaciones de los datos para leer el dataset con en el formato y tipo de datos correctos. Se eliminaron o imputaron datos nulos, se eliminaron duplicados y columnas que no se necesitan para responder las consultas o preparar los modelos de aprendizaje automático, de esta forma se pudo optimizar el rendimiento de la API. Finalmente estos archivos se exportaron y guardaron en formato CSV.
 
-El proceso de ETL se puede consultar en el siguiente [notebook](https://colab.research.google.com/drive/1gRGEWNJTvKI-PIOo9EgD6j9HVNSzHmOT?usp=sharing) de Google Colaboratory.
+El proceso de ETL se puede consultar en el siguiente [notebook](https://colab.research.google.com/drive/13FenTas8UPPPfukNK6Brq1c0tTXR-Qe5?usp=sharing) de Google Colaboratory.
 
-Los archivos resultantes luego del proceso de ETL se pueden consultar siguiendo este [Link](https://drive.google.com/drive/folders/1jJBJH0Zm1ynoFom9Azflzr7ENGKMjh-K?usp=sharing)
+Los archivos resultantes luego del proceso de ETL se pueden consultar siguiendo este [Link](https://drive.google.com/drive/folders/1eMpd99oz-da24p0OoCHxzlKc41YwQOtD?usp=sharing)
 
 ## **Feature Engineering**
 
@@ -64,7 +64,7 @@ Se aplicó un "análisis de sentimiento" a las reseñas (reviews) de los usuario
 
 El análisis se realizó utilizando la librería TextBlob de procesamiento de lenguaje natural (NLP) en Phyton, la cual calcula calcular la polaridad de sentimiento y los datos resultantes se almacenaron en una nueva columna llamada 'sentiment_analysis' que reemplazó a la columna 'reviews'.
 
-El Procesamiento de Lenguaje Natural (NLP) realizado se puede consultar en el siguiente [notebook](https://colab.research.google.com/drive/1KKGA4sccL7xBIOV4OcsLZQstLWcQABDN?usp=sharing) de Google Colaboratory.
+El Procesamiento de Lenguaje Natural (NLP) realizado se puede consultar en el siguiente [notebook](https://colab.research.google.com/drive/1eZeyxxc4Mwd8Kt1gzI3GX5omMHAfmg8w?usp=sharing) de Google Colaboratory.
 
 
 ## **Desarrollo de la API**
