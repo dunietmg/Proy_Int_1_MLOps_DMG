@@ -16,7 +16,7 @@
 
 ## **Descripción y Contexto**
 
-Simulando un entorno de trabajo real el proyecto se situa en el estudiante desarrollando un roll de Data Scientist como trabajandor de la  plataforma de distribución digital de videojuegos "Steam".
+Simulando un entorno de trabajo real el proyecto se situa en el estudiante desarrollando un roll de Data Scientist como trabajandor de la  plataforma de distribución digital de videojuegos ["Steam"](https://store.steampowered.com/).
 
 Steam es un servicio de distribución digital de videojuegos. Fue desarrollado por Valve Corporation y lanzado en septiembre de 2003. Steam está disponible en Microsoft Windows, macOS y otras plataformas.
 
