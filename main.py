@@ -1,3 +1,6 @@
+
+# LIBRERÍAS
+
 from typing import Union, List
 import os
 import string
@@ -257,10 +260,13 @@ def get_recomendacion_juego(titulo: str):
     except KeyError:
         raise HTTPException(status_code=404, detail=f'El juego {titulo} no se encuentra en el DataFrame.')
     
-   
-# => ML MODELO DE RECOMENDACION - JUEGOS RECOMENDADOS PARA EL USUARIO
 
-app.get("/recomendacion_usuario/{user_id}")
+# => ML MODELO DE RECOMENDACION - JUEGOS RECOMENDADOS PARA EL USUARIO
+    
+
+
+
+@app.get("/recomendacion_usuario/{user_id}")
 def get_recomendacion_usuario(user_id: str):
 
     try:
@@ -279,7 +285,9 @@ def get_recomendacion_usuario(user_id: str):
         tfidf_matrix = tfidf.fit_transform(df_mod_rec_2['app_name'])
 
         # Entrenar un modelo de clasificación basado en vecinos más cercanos
-        X_train, X_test, y_train, y_test = train_test_split(tfidf_matrix, df_mod_rec_2['recommend'], test_size=0.2, random_state=42)
+        X_train, X_test, y_train, y_test = train_test_split(
+            tfidf_matrix, df_mod_rec_2['recommend'], test_size=0.2, random_state=42
+        )
         knn_model = KNeighborsClassifier(n_neighbors=5, metric='cosine')
         knn_model.fit(X_train, y_train)
 
@@ -296,18 +304,16 @@ def get_recomendacion_usuario(user_id: str):
             # Predecir las recomendaciones usando el modelo entrenado
             _, indices = knn_model.kneighbors(tfidf_matrix[user_index])
             recommendations = df_mod_rec_2['app_name'].iloc[indices.flatten()].tolist()
-            
+
             # Respuesta en formato JSON
             response_data = {"user_id": user_id, "recomendaciones_de_juegos": recommendations}
             return JSONResponse(content=jsonable_encoder(response_data))
         else:
             return JSONResponse(content=jsonable_encoder({"error": f"No se encontró el usuario con ID: {user_id}"}), status_code=404)
-        
+    
     except HTTPException as e:
         # Manejar la excepción y responder con un mensaje de error adecuado
         return JSONResponse(content=jsonable_encoder({"error": str(e)}), status_code=e.status_code)
     except Exception as e:
         # Manejar otras excepciones generales
         return JSONResponse(content=jsonable_encoder({"error": f"Error interno: {str(e)}"}), status_code=500)
-        
-
