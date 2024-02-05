@@ -13,7 +13,9 @@ import pandas as pd
 import pyarrow.parquet as pq
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import linear_kernel
+from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
+
 
 
 # ejecutar: uvicorn main:app --reload   =>para cargar en el servidor
@@ -284,8 +286,7 @@ def get_recomendacion_usuario(user_id: str):
 
         # Entrenar un modelo de clasificación basado en vecinos más cercanos
         X_train, X_test, y_train, y_test = train_test_split(
-            tfidf_matrix, df_mod_rec_2['recommend'], test_size=0.2, random_state=42
-        )
+        tfidf_matrix, df_mod_rec_2['recommend'], test_size=0.2, random_state=42)
         knn_model = KNeighborsClassifier(n_neighbors=5, metric='cosine')
         knn_model.fit(X_train, y_train)
 
@@ -299,18 +300,9 @@ def get_recomendacion_usuario(user_id: str):
         if not matching_users.empty:
             user_index = matching_users.index[0]
 
-            # Recomendaciones basadas en similitud coseno y los filtros requeridos
-            recommendations = []
-            seen_games = set()  # Utilizar un conjunto para evitar duplicados
-            for i, score in sorted(enumerate(cosine_sim[user_index]), key=lambda x: x[1], reverse=True):
-                if df_mod_rec_2['recommend'][i] and df_mod_rec_2['sentiment_analysis'][i] in [0, 1, 2]:
-                    app_name = df_mod_rec_2['app_name'][i]
-                    if app_name not in seen_games:
-                        recommendations.append({app_name})
-                        seen_games.add(app_name)
-
-            # Selecciona las primeras 5 recomendaciones
-            top_recommendations = recommendations[:5]
+            # Predecir las recomendaciones usando el modelo entrenado
+            _, indices = knn_model.kneighbors(tfidf_matrix[user_index])
+            recommendations = df_mod_rec_2['app_name'].iloc[indices.flatten()].tolist()
 
             # Respuesta en formato JSON
             response_data = {"user_id": user_id, "recomendaciones_de_juegos": recommendations}
