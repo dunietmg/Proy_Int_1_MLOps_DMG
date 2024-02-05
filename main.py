@@ -252,28 +252,28 @@ del tfidf_matrix
 del tfidf_matrix_csr
 
 @app.get("/recomendacion_juego/{titulo}")
-def get_recomendacion_juego(titulo: str):
-    # Verifica la existencia del juego en el DataFrame
-    if titulo not in indices:
-        return JSONResponse(content={'error': f'El juego {titulo} no se encuentra en el DataFrame.'}, status_code=404)
+def recomendacion_juego(titulo: str):
+    try:
+        # Índice del juego en la matriz de similitud coseno
+        idx = indices[titulo]
 
-    # Índice del juego en la matriz de similitud coseno
-    idx = indices[titulo]
+        # Puntuaciones para similitud para el juego
+        sim_scores = list(enumerate(cosine_sim[idx]))
 
-    # Puntuaciones de similitud para el juego
-    sim_scores = list(enumerate(cosine_sim[idx]))
+        # Ordena las puntuaciones de forma descendente
+        sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)
 
-    # Puntuaciones de similitud por orden descendente
-    sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)
+        # Índices de los 5 juegos más similares
+        game_indices = [i[0] for i in sim_scores[1:6]]
 
-    # Índices de los 5 juegos más similares
-    game_indices = [i[0] for i in sim_scores[1:6]]
+        # Títulos de los 5 juegos más similares
+        recommendations = indices.index[game_indices].tolist()
 
-    # Títulos de los 5 juegos más similares
-    recommendations = indices.index[game_indices].tolist()
+        result_json = jsonable_encoder({'TÍTULO': titulo, 'RECOMENDACIONES DE JUEGOS: ': recommendations})
+        return JSONResponse(content=result_json)
 
-    result_json = jsonable_encoder({'TÍTULO': titulo, 'RECOMENDACIONES DE JUEGOS: ': recommendations})
-    return JSONResponse(content=result_json)
+    except KeyError:
+        raise HTTPException(status_code=404, detail=f'El juego {titulo} no se encuentra en el DataFrame.')
 
 
 # => ML MODELO DE RECOMENDACION - JUEGOS RECOMENDADOS PARA EL USUARIO
