@@ -226,7 +226,6 @@ def developer_reviews_analysis_endpoint(desarrollador: str):
 
 @app.get("/recomendacion_juego/{titulo}")
 def get_recomendacion_juego(titulo: str):
-    
     # Lee el archivo parquet y obtiene la ruta del directorio actual del script
     current_directory = os.path.dirname(os.path.abspath(__file__))
     path_to_parquet = os.path.join(current_directory, 'data', 'df_mod_rec_1.parquet')
@@ -243,28 +242,27 @@ def get_recomendacion_juego(titulo: str):
     # Crea una serie de índices utilizando el nombre de la aplicación ('app_name') como índice
     indices = pd.Series(df_mod_rec_1.index, index=df_mod_rec_1['app_name']).drop_duplicates()
 
-    try:
-        # Índice del juego en la matriz de similitud coseno
-        idx = indices[titulo]
+    # Verifica la existencia del juego en el DataFrame
+    if titulo not in indices:
+        return JSONResponse(content={'error': f'El juego {titulo} no se encuentra en el DataFrame.'}, status_code=404)
 
-        # Puntuaciones de similitud para el juego
-        sim_scores = list(enumerate(cosine_sim[idx]))
+    # Índice del juego en la matriz de similitud coseno
+    idx = indices[titulo]
 
-        # Puntuaciones de similitud por orden descendente
-        sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)
+    # Puntuaciones de similitud para el juego
+    sim_scores = list(enumerate(cosine_sim[idx]))
 
-        # Índices de los 5 juegos más similares
-        game_indices = [i[0] for i in sim_scores[1:6]]
+    # Puntuaciones de similitud por orden descendente
+    sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)
 
-        # Títulos de los 5 juegos más similares
-        recommendations = df_mod_rec_1['app_name'].iloc[game_indices]
+    # Índices de los 5 juegos más similares
+    game_indices = [i[0] for i in sim_scores[1:6]]
 
-        result_json = jsonable_encoder({'TÍTULO': titulo, 'RECOMENDACIONES DE JUEGOS: ': recommendations.tolist()})
-        return JSONResponse(content=result_json)
+    # Títulos de los 5 juegos más similares
+    recommendations = df_mod_rec_1['app_name'].iloc[game_indices]
 
-    except KeyError:
-        raise HTTPException(status_code=404, detail=f'El juego {titulo} no se encuentra en el DataFrame.')
-    
+    result_json = jsonable_encoder({'TÍTULO': titulo, 'RECOMENDACIONES DE JUEGOS: ': recommendations.tolist()})
+    return JSONResponse(content=result_json)
 
 # => ML MODELO DE RECOMENDACION - JUEGOS RECOMENDADOS PARA EL USUARIO
     
