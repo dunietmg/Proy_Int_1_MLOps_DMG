@@ -24,7 +24,7 @@ La emprese solicita crear un modelo de Machine Learning para desarrollar un sist
 
 Para realizar el trabajo se propone el siguiente esquema general:
 
-<p align=center>  <img src="https://scontent.fpss6-1.fna.fbcdn.net/v/t39.30808-6/423247335_7047633531985403_5787616016465433474_n.jpg?_nc_cat=101&ccb=1-7&_nc_sid=3635dc&_nc_eui2=AeGLnT22YXpeTV5qO3cCEyqIfZ0Dx2xS9r99nQPHbFL2vxDMXoyXdGDEi_j9xOvp9gqhsilUVo9lVGMnHuJrXCwJ&_nc_ohc=SAxKJ0Qx8pUAX8YLmBm&_nc_ht=scontent.fpss6-1.fna&oh=00_AfCaCwW2ZImS42Wq9SRbc3sKJiBynITHkISfah1Uwtul2w&oe=65BC79BF"  height=400>
+<p align=center>  <img src="https://drive.google.com/file/d/10fBbLwEteF2mDtOGRiLYXt8rLTzINchX/view?usp=drive_link"  height=400>
 </p>
 
 ## **Datasets**
