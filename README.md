@@ -52,7 +52,9 @@ Se realizaron las transformaciones de los datos para leer el dataset con en el f
 
 El proceso de ETL se puede consultar en el siguiente [notebook](https://colab.research.google.com/drive/1gRGEWNJTvKI-PIOo9EgD6j9HVNSzHmOT?usp=sharing) de Google Colaboratory.
 
-Los archivos resultantes luego del proceso de ETL se pueden consultar siguiendo este [Link](https://drive.google.com/drive/folders/1Co0-det__Hjj6rgRHP9kfRs3lhxu7Heu?usp=sharing)
+Los archivos resultantes luego del proceso de ETL se exportaron en formato parquet y están disponibles en el siguiente [Link](https://drive.google.com/drive/folders/1LgLQthdEuFhPh12N5nX4gMjs0iJROEkm?usp=sharing)
+
+
 
 ## **Feature Engineering**
 
@@ -62,14 +64,14 @@ Se aplicó un "análisis de sentimiento" a las reseñas (reviews) de los usuario
 - Valor 1: neutral o sin review
 - Valor 2: positivo.
 
-El análisis se realizó utilizando la librería TextBlob de procesamiento de lenguaje natural (NLP) en Phyton, la cual calcula calcular la polaridad de sentimiento y los datos resultantes se almacenaron en una nueva columna llamada 'sentiment_analysis' que reemplazó a la columna 'reviews'.
+El análisis se realizó utilizando la librería TextBlob de procesamiento de lenguaje natural (NLP) en Phyton, la cual calcula la polaridad de sentimiento y los datos resultantes se almacenaron en una nueva columna llamada 'sentiment_analysis' que reemplazó a la columna 'reviews'.
 
 El Procesamiento de Lenguaje Natural (NLP) realizado se puede consultar en el siguiente [notebook](https://colab.research.google.com/drive/1KKGA4sccL7xBIOV4OcsLZQstLWcQABDN?usp=sharing) de Google Colaboratory.
 
 
 ## **Desarrollo de la API**
 
-En este proyecto se utilizó **FastAPI**, la cual tiene la ventaja de simplificar el desarrollo de APIs en Python y proporciona herramientas poderosas y eficientes y es de código abierto. FastAPI además genera automáticamente documentación interactiva para la API a partir de las anotaciones de tipo y los comentarios en el código. La documentación y consultas se pueden consultar en el siguiente [Link](https://deploy-api-proy-int-1-duniet-marrero.onrender.com) 
+En este proyecto se utilizó **FastAPI**, la cual tiene la ventaja de simplificar el desarrollo de APIs en Python y proporciona herramientas poderosas y eficientes y es de código abierto. FastAPI además genera automáticamente documentación interactiva para la API a partir de las anotaciones de tipo y los comentarios en el código. La documentación y consultas se pueden consultar en el siguiente [Link](https://deploy-api-proy-int-1-duniet-marrero.onrender.com/) 
 
 Las consultas que se pueden realizar desde la API son las siguientes:
 
