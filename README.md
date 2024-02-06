@@ -1,20 +1,6 @@
 
 
-<!DOCTYPE html>
-<html>
-
-<head>
-  <style>
-    img {
-      display: block;
-      margin: auto;
-    }
-  </style>
-</head>
-
-<body>
-
-  <img src="215621-1.png" alt="alt text" width="100" />
+  <img src="henry logo.png" alt="alt text" width="100" style="display: block; margin: auto;"/>
 
   <h1 align="center">PROYECTO INDIVIDUAL Nº1</h1>
   <h1 align="center">Autor: Duniet Marrero García</h1>
@@ -59,8 +45,7 @@ Los Datasets originales (sin procesar) se pueden consultar siguiendo este [Link]
 
 Los datasets de trabajo se entregaron por parte de la empresa en formato .JSON con columnas de datos anidados, razón por la cual se procesaron utilizando la función "normalize"  para aplanar las columnas y obtener los datos en el formato adecuado.
 
-Se  analizó la estructura del dataset, su cantidad de filas y columnas, tipos de datos, datos nulos, relacion entre los mismos, etc.
-
+Se  analizó la estructura del dataset, su cantidad de filas y columnas, tipos de datos, datos nulos, relacion entre los mismos, etc. El Diciconario de Datos proporcionado se utilizó como material de consulta para el análisis y exploración de los datos.
 </p>
 
 El EDA realizado se puede consultar en el siguiente [notebook](https://colab.research.google.com/drive/1KFP8n18x3_jHysXZkNCAxP8-r6BTAo3p?usp=sharing) de Google Colaboratory.
@@ -68,11 +53,11 @@ El EDA realizado se puede consultar en el siguiente [notebook](https://colab.res
 
 ## **Extracción, Transformación y Carga de los datos (ETL)**
 
-Se realizaron las transformaciones de los datos para leer el dataset con en el formato y tipo de datos correctos. Se eliminaron o imputaron datos nulos, se eliminaron duplicados y columnas que no se necesitan para responder las consultas o preparar los modelos de aprendizaje automático, de esta forma se pudo optimizar el rendimiento de la API. Finalmente estos archivos se exportaron y guardaron en formato CSV.
+Se realizaron las transformaciones de los datos para leer el dataset con en el formato y tipo de datos correctos. Se eliminaron o imputaron datos nulos, se eliminaron duplicados y columnas que no se necesitan para responder las consultas o preparar los modelos de aprendizaje automático, de esta forma se pudo optimizar el rendimiento de la API. Finalmente estos archivos se exportaron y guardaron en formato CSV inicialmente.
 
 El proceso de ETL se puede consultar en el siguiente [notebook](https://colab.research.google.com/drive/1gRGEWNJTvKI-PIOo9EgD6j9HVNSzHmOT?usp=sharing) de Google Colaboratory.
 
-Los archivos resultantes luego del proceso de ETL se exportaron en formato parquet y están disponibles en el siguiente [Link](https://drive.google.com/drive/folders/1LgLQthdEuFhPh12N5nX4gMjs0iJROEkm?usp=sharing)
+Los archivos resultantes luego del proceso de ETL se exportaron en formato parquet para reducir su tamaño y que pudieran ser consumidos directamente por la API, estos están disponibles en el siguiente [Link](https://drive.google.com/drive/folders/1LgLQthdEuFhPh12N5nX4gMjs0iJROEkm?usp=sharing)
 
 
 
@@ -91,7 +76,8 @@ El Procesamiento de Lenguaje Natural (NLP) realizado se puede consultar en el si
 
 ## **Desarrollo de la API**
 
-En este proyecto se utilizó **FastAPI**, la cual tiene la ventaja de simplificar el desarrollo de APIs en Python y proporciona herramientas poderosas y eficientes y es de código abierto. FastAPI además genera automáticamente documentación interactiva para la API a partir de las anotaciones de tipo y los comentarios en el código. La documentación y consultas se pueden consultar en el siguiente [Link](https://deploy-api-proy-int-1-duniet-marrero.onrender.com/) 
+En este proyecto se utilizó **FastAPI**, la cual tiene la ventaja de simplificar el desarrollo de APIs en Python y proporciona herramientas poderosas y eficientes y es de código abierto. FastAPI además genera automáticamente documentación interactiva para la API a partir de las anotaciones de tipo y los comentarios en el código. La documentación y consultas (endpoints) estan disponibilizadas en el siguiente [Link](https://deploy-api-proy-int-1-duniet-marrero.onrender.com/). El código de las consultas se puede ver en el archivo "main.py" del repositorio
+La API fue desarrollada utilizando Python con render como framework web. 
 
 Las consultas que se pueden realizar desde la API son las siguientes:
 
@@ -107,7 +93,7 @@ Las consultas que se pueden realizar desde la API son las siguientes:
 
 ## **Análisis exploratorio de los datos (EDA para Machine Learning)**
 
-Una vez analizados y transformados los datos primarios realizando las tareas de limpieza necesarias, se procede a analizar las relaciones que hay entre las variables del dataset, (outliers o anomalías, patrones, analisis de reviews, etc.) A partir de este análisis se procedió a realizar los modelos de recomendación. Los detalles se pueden consultar en el siguiente [notebook](https://colab.research.google.com/drive/1jOa__1O6GtC3g8Oi3AeR3nL-Cu1_xVrW?usp=sharing) de Google Colaboratory.
+Una vez analizados y transformados los datos primarios realizando las tareas de limpieza necesarias, se procede a analizar las relaciones que hay entre las variables de los datasets, (datos duplicados, outliers o anomalías, patrones, relación entre las variables, análisis de reviews mediante nube de palabras, etc.) A partir de este análisis se procedió a realizar los modelos de recomendación. Los detalles se pueden consultar en el siguiente [notebook](https://colab.research.google.com/drive/1jOa__1O6GtC3g8Oi3AeR3nL-Cu1_xVrW?usp=sharing) de Google Colaboratory.
 
 <img src="Nube de palabras.png" alt="alt text" width="500" style="display: block; margin: auto;"/>
 
@@ -122,7 +108,7 @@ Los detalles de los modelos de recomendación se pueden consultar en el siguient
 
 ## **Video** 
 
-Finalmente se incluye un video explicativo mostrando el proceso de desarrollo del proyecto y el resultado de las consultas propuestas y del modelo de Machine Learning, al mismo puede accederse desde este [Link]().
+Finalmente se incluye un video explicativo mostrando el proceso de desarrollo del proyecto y el resultado de las consultas propuestas y del modelo de Machine Learning, al mismo puede accederse desde este [Link](https://drive.google.com/drive/folders/16TNxn6HyXzDpjW0yJGXS8PeBV0CCYqYj?usp=sharing).
 
 <br/>
 

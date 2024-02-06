@@ -123,49 +123,46 @@ def userdata(user_id: str):
 
 @app.get("/user_for_genre/{genre}", response_model=dict)
 def user_for_genre(genre: str):
-
-   # Lee el archivo parquet y obtiene la ruta del directorio actual del script
-    current_directory = os.path.dirname(os.path.abspath(__file__))
     
-    # Carga los datos de juegos y géneros como un DataFrame de Dask
-    path_to_games_parquet = os.path.join(current_directory, 'data', 'df_games_user_genre.parquet')
-    df_games_user_genre = dd.read_parquet(path_to_games_parquet)
+    try:
+        # Lee los archivos parquet y obtiene la ruta del directorio actual del script
+        current_directory = os.path.dirname(os.path.abspath(__file__))
+        path_to_items_parquet = os.path.join(current_directory, 'data', 'df_games_user_genre.parquet')
+        path_to_reviews_parquet = os.path.join(current_directory, 'data', 'df_user_horas_juego.parquet')
 
-    df_games_user_genre = df_games_user_genre.sample(frac=0.1, random_state=42)
+        # Cargar los datos de los archivos Parquet como DataFrames
+        df_games_user_genre = pq.read_table(path_to_items_parquet).to_pandas()
+        df_user_horas_juego = pq.read_table(path_to_reviews_parquet).to_pandas()
 
-    # Carga los datos de usuarios y horas jugadas como un DataFrame de Dask
-    path_to_users_parquet = os.path.join(current_directory, 'data', 'df_user_horas_juego.parquet')
-    df_user_horas_juego = dd.read_parquet(path_to_users_parquet)
+        # Une ambos dataframes
+        df_genres_hours = df_games_user_genre.merge(df_user_horas_juego, on='item_id', how='right')
 
-    df_games_user_genre = df_games_user_genre.sample(frac=0.1, random_state=42)
+        # Filtra el dataframe para obtener solo las filas relacionadas con el género dado
+        df_filtered = df_genres_hours[df_genres_hours['genres'] == genre]
 
-    # Realiza la operación de merge utilizando Dask
-    df_genres_hours = dd.merge(df_games_user_genre, df_user_horas_juego, on='item_id', how='right')
+        if df_filtered.empty:
+            raise HTTPException(status_code=404, detail="No data found for the given genre")
 
-    # Filtra el DataFrame para obtener solo las filas relacionadas con el género dado
-    df_filtered = df_genres_hours[df_genres_hours['genres'] == genre]
+        # Encuentra el usuario que acumula más horas jugadas para el género
+        max_user = df_filtered.groupby('user_id')['playtime_forever'].sum().idxmax()
 
-    if df_filtered.compute().empty:
-        raise HTTPException(status_code=404, detail="No data found for the given genre")
+        # Filtra el dataframe para obtener solo las filas relacionadas con el usuario que acumula más horas
+        df_user_max_hours = df_filtered[df_filtered['user_id'] == max_user]
 
-    # Encuentra el usuario que acumula más horas jugadas para el género
-    max_user = df_filtered.groupby('user_id')['playtime_forever'].sum().idxmax().compute()
+        # Agrupa por año y suma las horas jugadas
+        horas_por_anio = df_user_max_hours.groupby('anio')['playtime_forever'].sum()
 
-    # Filtra el DataFrame para obtener solo las filas relacionadas con el usuario que acumula más horas
-    df_user_max_hours = df_filtered[df_filtered['user_id'] == max_user]
+        # Construiye el diccionario de resultados
+        result_dict = {
+            "Usuario con más horas jugadas para Género X": max_user,
+            "Horas jugadas": [{"Año": int(year), "Horas": int(hours)} for year, hours in horas_por_anio.reset_index().to_dict(orient='split')['data']]
+        }
 
-    # Agrupa por año y suma las horas jugadas
-    horas_por_anio = df_user_max_hours.groupby('anio')['playtime_forever'].sum().compute()
+        result_json = jsonable_encoder(result_dict)
+        return JSONResponse(content=result_json)
 
-    # Construye el diccionario de resultados
-    result_dict = {
-        "Usuario con más horas jugadas para Género X": max_user,
-        "Horas jugadas": [{"Año": int(year), "Horas": int(hours)} for year, hours in horas_por_anio.reset_index().to_dict(orient='split')['data']]
-    }
-
-    result_json = jsonable_encoder(result_dict)
-    return JSONResponse(content=result_json)
-
+    except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
       
       
 # => FUNCION BEST_DEVELOPER_YEAR
