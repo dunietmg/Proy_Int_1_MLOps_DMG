@@ -131,9 +131,13 @@ def user_for_genre(genre: str):
     path_to_games_parquet = os.path.join(current_directory, 'data', 'df_games_user_genre.parquet')
     df_games_user_genre = dd.read_parquet(path_to_games_parquet)
 
+    df_games_user_genre = df_games_user_genre.sample(frac=0.1, random_state=42)
+
     # Carga los datos de usuarios y horas jugadas como un DataFrame de Dask
     path_to_users_parquet = os.path.join(current_directory, 'data', 'df_user_horas_juego.parquet')
     df_user_horas_juego = dd.read_parquet(path_to_users_parquet)
+
+    df_games_user_genre = df_games_user_genre.sample(frac=0.1, random_state=42)
 
     # Realiza la operación de merge utilizando Dask
     df_genres_hours = dd.merge(df_games_user_genre, df_user_horas_juego, on='item_id', how='right')

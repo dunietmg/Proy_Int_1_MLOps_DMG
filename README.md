@@ -1,4 +1,6 @@
-<p align=center><img src="https://d31uz8lwfmyn8g.cloudfront.net/Assets/logo-henry-white-lg.png" height=100><p>
+<img src="215621-1.png" alt="alt text" width="100" style="display: block; margin: auto;"/>
+
+
 
 # <h1 align=center> **PROYECTO INDIVIDUAL Nº1** </h1>
 
@@ -7,10 +9,12 @@
 # <h1 align=center>**Tema: Machine Learning Operations (MLOps)**</h1>
 
 <p align="center">
-<img src="https://www.crestdatasys.com/wp-content/uploads/elementor/thumbs/chart-02-qccghw7hjmq4y8t66r0vddbb2l07qr6d5k9kgn0c90.jpg"  height=200>
-</p>
+
+
 
 <p align=center> ¡Este readme corresponde al Proyecto Individual Nro. 1 de la Etapa de labs! para la Cohorte DATA-PT-06.
+
+<img src="MLOps-use-cases.png" alt="alt text" width="300" style="display: block; margin: auto;"/>
 
 <hr>  
 
@@ -24,7 +28,7 @@ La emprese solicita crear un modelo de Machine Learning para desarrollar un sist
 
 Para realizar el trabajo se propone el siguiente esquema general:
 
-<p align=center>  <img src="https://drive.google.com/file/d/10fBbLwEteF2mDtOGRiLYXt8rLTzINchX/view?usp=drive_link"  height=400>
+<img src="diagrama general PI1-1.png" alt="alt text" width="500" style="display: block; margin: auto;"/>
 </p>
 
 ## **Datasets**
@@ -39,13 +43,12 @@ Los tres archivos para iniciar el trabajo se entregaron en formato JSON:
 
 Los Datasets originales (sin procesar) se pueden consultar siguiendo este [Link](https://drive.google.com/drive/folders/1k_f3odHUPy3nQOt9qzOuMQnDcNpsX2En?usp=drive_link).
 
-## **Análisis Exploratorio de los Datos (EDA)**
+## **Análisis Exploratorio de los Datos (EDA Inicial)**
 
 Los datasets de trabajo se entregaron por parte de la empresa en formato .JSON con columnas de datos anidados, razón por la cual se procesaron utilizando la función "normalize"  para aplanar las columnas y obtener los datos en el formato adecuado.
 
 Se  analizó la estructura del dataset, su cantidad de filas y columnas, tipos de datos, datos nulos, relacion entre los mismos, etc.
 
-<p align=center>  <img src="https://scontent.fpss6-1.fna.fbcdn.net/v/t39.30808-6/425713646_7073953302686759_2854334056812223078_n.jpg?_nc_cat=111&ccb=1-7&_nc_sid=3635dc&_nc_eui2=AeEM_qUC8yY_8ID43FVNsbAIYFyFBi8Eq29gXIUGLwSrb3bRTxXA0xPQg2K5SRWZBXoHlINkaLUieKGSDt5Q6Thi&_nc_ohc=_EMACpJywXgAX_gA-GH&_nc_ht=scontent.fpss6-1.fna&oh=00_AfDpxeUH56xWC8YT5PEq65FnY00XhEey8PP9lzkDdKPOfw&oe=65C642EE"  height=300>
 </p>
 
 El EDA realizado se puede consultar en el siguiente [notebook](https://colab.research.google.com/drive/1KFP8n18x3_jHysXZkNCAxP8-r6BTAo3p?usp=sharing) de Google Colaboratory.
@@ -90,9 +93,11 @@ Las consultas que se pueden realizar desde la API son las siguientes:
   
 + def **developer_reviews_analysis (desarrolladora : str)**: Según el desarrollador (input), devuelve la cantidad total de registros de reseñas de usuarios categorizadas con un análisis de sentimiento como valor positivo y negativo. 
 
-## **Análisis exploratorio de los datos (EDA)**
+## **Análisis exploratorio de los datos (EDA para Machine Learning)**
 
 Una vez analizados y transformados los datos primarios realizando las tareas de limpieza necesarias, se procede a analizar las relaciones que hay entre las variables del dataset, (outliers o anomalías, patrones, analisis de reviews, etc.) A partir de este análisis se procedió a realizar los modelos de recomendación. Los detalles se pueden consultar en el siguiente [notebook](https://colab.research.google.com/drive/1jOa__1O6GtC3g8Oi3AeR3nL-Cu1_xVrW?usp=sharing) de Google Colaboratory.
+
+<img src="Nube de palabras.png" alt="alt text" width="500" style="display: block; margin: auto;"/>
 
 ## **Modelos de Recomendación (ML)**
 
