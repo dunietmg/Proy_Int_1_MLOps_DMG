@@ -1,14 +1,26 @@
-<img src="215621-1.png" alt="alt text" width="100" style="display: block; margin: auto;"/>
 
 
+<!DOCTYPE html>
+<html>
 
-# <h1 align=center> **PROYECTO INDIVIDUAL Nº1** </h1>
+<head>
+  <style>
+    img {
+      display: block;
+      margin: auto;
+    }
+  </style>
+</head>
 
-# <h1 align=center> ***Autor: Duniet Marrero García*** </h1>
+<body>
 
-# <h1 align=center>**Tema: Machine Learning Operations (MLOps)**</h1>
+  <img src="215621-1.png" alt="alt text" width="100" />
 
-<p align="center">
+  <h1 align="center">PROYECTO INDIVIDUAL Nº1</h1>
+  <h1 align="center">Autor: Duniet Marrero García</h1>
+  <h1 align="center">Tema: Machine Learning Operations (MLOps)</h1>
+
+</body>
 
 
 
