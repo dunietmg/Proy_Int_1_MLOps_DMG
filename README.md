@@ -76,8 +76,9 @@ El Procesamiento de Lenguaje Natural (NLP) realizado se puede consultar en el si
 
 ## **Desarrollo de la API**
 
-En este proyecto se utilizó **FastAPI**, la cual tiene la ventaja de simplificar el desarrollo de APIs en Python y proporciona herramientas poderosas y eficientes y es de código abierto. FastAPI además genera automáticamente documentación interactiva para la API a partir de las anotaciones de tipo y los comentarios en el código. La documentación y consultas (endpoints) estan disponibilizadas en el siguiente [Link](https://deploy-api-proy-int-1-duniet-marrero.onrender.com/). El código de las consultas se puede ver en el archivo "main.py" del repositorio
-La API fue desarrollada utilizando Python con render como framework web. 
+En este proyecto se utilizó **FastAPI**, la cual tiene la ventaja de simplificar el desarrollo de APIs en Python y proporciona herramientas poderosas y eficientes y es de código abierto. FastAPI además genera automáticamente documentación interactiva para la API a partir de las anotaciones de tipo y los comentarios en el código. La documentación y consultas (endpoints) estan disponibilizadas en el siguiente [Link](https://deploy-api-proy-int-1-duniet-marrero.onrender.com/). El código de las consultas se puede ver en el archivo "main.py" del repositorio o siguiendo el siguiente [Link](https://colab.research.google.com/drive/1si990sf0WONoiOdcobntKIqJU8Ua1amB?usp=sharing). 
+
+La API fue desarrollada utilizando Python con Render como framework web. 
 
 Las consultas que se pueden realizar desde la API son las siguientes:
 
