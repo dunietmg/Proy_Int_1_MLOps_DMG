@@ -108,7 +108,7 @@ Los detalles de los modelos de recomendación se pueden consultar en el siguient
 
 ## **Video** 
 
-Finalmente se incluye un video explicativo mostrando el proceso de desarrollo del proyecto y el resultado de las consultas propuestas y del modelo de Machine Learning, al mismo puede accederse desde este [Link](https://drive.google.com/drive/folders/16TNxn6HyXzDpjW0yJGXS8PeBV0CCYqYj?usp=sharing).
+Finalmente se incluye un video explicativo mostrando el proceso de desarrollo del proyecto y el resultado de las consultas propuestas y del modelo de Machine Learning, al mismo puede accederse desde este [Link](https://youtu.be/-rW9dm6UqyA).
 
 <br/>
 
